@@ -1,0 +1,67 @@
+{
+  "common": {
+    "trial_class": "ট্রায়াল ক্লাস ফরম",
+    "take_trial": "একটি ফ্রি ট্রায়াল ক্লাস করুন",
+    "view_more": "আরও দেখুন",
+    "learn_more": "আরও জানুন",
+    "contact_us": "যোগাযোগ করুন",
+    "call": "কল করুন",
+    "email": "ইমেইল",
+    "whatsapp": "হোয়াটসঅ্যাপ",
+    "login": "লগইন",
+    "logout": "লগআউট",
+    "save": "সেভ করুন",
+    "cancel": "বাতিল",
+    "edit": "এডিট",
+    "delete": "মুছুন",
+    "add": "যোগ করুন",
+    "upload": "ছবি আপলোড",
+    "loading": "লোড হচ্ছে...",
+    "language": "ভাষা"
+  },
+  "sections": {
+    "why_choose": "কেনো আমাদের বাছাই করবেন",
+    "why_choose_eyebrow": "আমাদের বৈশিষ্ট সমূহ",
+    "management": "ম্যানেজমেন্ট টিম",
+    "management_heading": "বিসমিল্লাহ এর সাফল্যের পিছনে যারা",
+    "teachers": "টিচার্স টিম",
+    "teachers_heading": "আমাদের অসাধারণ শিক্ষকগণ",
+    "testimonials": "সম্মানিত গার্ডিয়ানদের মন্তব্য",
+    "testimonials_heading": "আমাদের সম্পর্কে অভিভাবকরা যা ভাবছেন",
+    "faq": "গুরুত্বপূর্ণ প্রশ্নসমূহ",
+    "faq_eyebrow": "আপনার প্রশ্ন, আমাদের উত্তর",
+    "pricing": "প্রাইসিং মডেল",
+    "pricing_heading": "আপনার পছন্দের প্লান বাছাই করুন",
+    "teachers_view_all": "শিক্ষকদের দেখুন",
+    "pricing_view_all": "প্রাইসিং প্লান দেখুন"
+  },
+  "footer": {
+    "academy": "একাডেমি",
+    "others": "অন্যান্য",
+    "contact": "যোগাযোগ"
+  },
+  "stats": {
+    "students": "শিক্ষার্থী",
+    "teachers": "শিক্ষক",
+    "hours": "ক্লাস আওয়ার",
+    "experience": "অভিজ্ঞতা"
+  },
+  "admin": {
+    "dashboard": "ড্যাশবোর্ড",
+    "hero": "হিরো সেকশন",
+    "about": "আমাদের সম্পর্কে",
+    "stats": "কাউন্টার",
+    "features": "বৈশিষ্ট্য",
+    "management": "ম্যানেজমেন্ট",
+    "teachers": "শিক্ষক",
+    "testimonials": "মন্তব্য",
+    "faq": "প্রশ্নোত্তর",
+    "pricing": "প্রাইসিং",
+    "cta": "CTA ব্যানার",
+    "nav": "নেভিগেশন",
+    "footer": "ফুটার",
+    "settings": "সেটিংস",
+    "welcome": "স্বাগতম, অ্যাডমিন",
+    "logged_in_as": "লগইন করেছেন"
+  }
+}

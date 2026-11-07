@@ -1,69 +1,112 @@
-import Image from "next/image";
+import { getContent } from "@/lib/content";
+import { Header } from "@/components/user/Header";
+import { Hero } from "@/components/user/Hero";
+import { Stats } from "@/components/user/Stats";
+import { About } from "@/components/user/About";
+import { Features } from "@/components/user/Features";
+import { Management } from "@/components/user/Management";
+import { Teachers } from "@/components/user/Teachers";
+import { Testimonials } from "@/components/user/Testimonials";
+import { CTA } from "@/components/user/CTA";
+import { FAQ } from "@/components/user/FAQ";
+import { Pricing } from "@/components/user/Pricing";
+import { Footer } from "@/components/user/Footer";
 
-export default function Home() {
+export const revalidate = 0; 
+
+export default async function Home() {
+  let dbContent = null;
+  const locale = "bn"; 
+
+  try {
+    dbContent = await getContent();
+  } catch (error) {
+    console.error("Database fetch failed:", error);
+  }
+
+  // 🌟 ফ্যালব্যাক ডাটা
+  const fallback: any = {
+    nav: [
+      { id: "1", label_bn: "হোম", label_en: "Home", href: "/", is_cta: false },
+      { id: "2", label_bn: "আমাদের সম্পর্কে", label_en: "About", href: "#about", is_cta: false },
+      { id: "3", label_bn: "শিক্ষক-শিক্ষিকা", label_en: "Teachers", href: "#teachers", is_cta: false },
+      { id: "4", label_bn: "প্রাইসিং", label_en: "Pricing", href: "#pricing", is_cta: false },
+      { id: "5", label_bn: "যোগাযোগ", label_en: "Contact", href: "#faq", is_cta: false },
+      { id: "6", label_bn: "ট্রায়াল ক্লাস ফরম", label_en: "Trial Class Form", href: "/trial-class", is_cta: true },
+    ],
+    hero: { heading_bn: "বিসমিল্লাহ ইলম একাডেমি", heading_en: "Bismillah", eyebrow_bn: "স্বাগতম", eyebrow_en: "Welcome", body_bn: "কুরআন শিক্ষার নির্ভরযোগ্য প্রতিষ্ঠান।", body_en: "Trusted Quran Academy", cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class", image_url: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?w=1600" },
+    stats: [
+      { id: "1", label_bn: "শিক্ষার্থী", label_en: "Students", value: 1200, suffix: "+", suffix_bn: "+", icon_key: "students" },
+      { id: "2", label_bn: "শিক্ষক", label_en: "Teachers", value: 100, suffix: "+", suffix_bn: "+", icon_key: "teachers" },
+      { id: "3", label_bn: "ক্লাস আওয়ার", label_en: "Hours", value: 300, suffix: "ঘণ্টা", suffix_bn: "ঘণ্টা", icon_key: "hours" },
+      { id: "4", label_bn: "অভিজ্ঞতা", label_en: "Experience", value: 6, suffix: "বছর", suffix_bn: "বছর", icon_key: "experience" },
+    ],
+    about: { heading_bn: "আমাদের সম্পর্কে", heading_en: "About Us", eyebrow_bn: "জানুন", eyebrow_en: "Learn", body_bn: "বিসমিল্লাহ ইলম একাডেমি একটি অনলাইন কুরআন শিক্ষার প্রতিষ্ঠান।", body_en: "Bismillah is an online academy", image_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800", cta_label_bn: "আরও জানুন", cta_label_en: "Read More", cta_href: "/" },
+    features: [
+      { id: "1", icon_key: "one-to-one", title_bn: "ওয়ান টু ওয়ান সিস্টেম", title_en: "One-to-One", body_bn: "ক্লাসে শুধুমাত্র একজন শিক্ষার্থী এবং একজন শিক্ষক থাকবেন।", body_en: "One student and one teacher." },
+      { id: "2", icon_key: "trial", title_bn: "ফ্রি ট্রায়াল ক্লাস", title_en: "Free Trial", body_bn: "ভর্তির পূর্বেই ৩০মিনিট এর ফ্রি ট্রায়াল ক্লাস এর সুযোগ।", body_en: "Free 30 min trial class." },
+      { id: "3", icon_key: "time", title_bn: "ফ্লেক্সিবল টাইম", title_en: "Flexible Time", body_bn: "দিনে রাতে ২৪ ঘন্টার যেকোনো টাইমে ক্লাস করতে পারবেন।", body_en: "24/7 flexible timing." },
+      { id: "4", icon_key: "female", title_bn: "ফিমেল টিচার", title_en: "Female Teacher", body_bn: "মেয়েদের জন্য রয়েছে কোয়ালিফাইড হাফেজা টিচার।", body_en: "Qualified female teachers for girls." },
+    ],
+    management: [],
+    teachers: [],
+    testimonials: [],
+    faqs: [],
+    pricing: [
+      { id: "1", name_bn: "বেসিক প্লান", name_en: "Basic Plan", price: 1000, features_bn: ["সপ্তাহে ৩ দিন ক্লাস", "ওয়ান টু ওয়ান"], features_en: ["3 days/week", "1-to-1"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
+      { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
+      { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
+    ],
+    cta: { eyebrow_bn: "যুক্ত হোন", eyebrow_en: "Join", heading_bn: "কুরআনের পথে যাত্রা শুরু হোক", heading_en: "Start your journey", primary_label_bn: "ট্রায়াল ক্লাস", primary_label_en: "Trial", primary_href: "/trial-class", secondary_label_bn: "শিক্ষক হোন", secondary_label_en: "Teacher", secondary_href: "/teacher-application" },
+    footer: [],
+    brand: { name_bn: "বিসমিল্লাহ ইলম একাডেমি", name_en: "Bismillah Ilm Academy", tagline_bn: "কুরআনের সাথে জান্নাতের পথে", tagline_en: "Path to Jannah", logo_url: null },
+    contact: { phone: "+8801700000000", phone_display: "+৮৮০ ১৭০০ ০০০ ০০০", email: "info@bismillah.com", whatsapp: "" },
+    socials: [{ icon: "facebook", href: "#" }, { icon: "youtube", href: "#" }],
+    footerCopy: { text_bn: "স্বত্ব @ ২০২৪ বিসমিল্লাহ", text_en: "Copyright @ 2024" }
+  };
+
+  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (নিরাপদ উপায়ে)
+  const content: any = {
+    ...fallback,
+    // নেভিগেশন ও লিস্টগুলো ডাটাবেস থেকে নিচ্ছি, না থাকলে ফলব্যাক
+    nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
+    stats: dbContent?.stats?.length ? dbContent.stats : fallback.stats,
+    features: dbContent?.features?.length ? dbContent.features : fallback.features,
+    teachers: dbContent?.teachers?.length ? dbContent.teachers : fallback.teachers,
+    management: dbContent?.management?.length ? dbContent.management : fallback.management,
+    testimonials: dbContent?.testimonials?.length ? dbContent.testimonials : fallback.testimonials,
+    faqs: dbContent?.faqs?.length ? dbContent.faqs : fallback.faqs,
+    pricing: dbContent?.pricing?.length ? dbContent.pricing : fallback.pricing,
+    footer: dbContent?.footer?.length ? dbContent.footer : fallback.footer,
+    
+    // অবজেক্টগুলোর ক্ষেত্রে চেক করছি, ডাটা না থাকলে ফলব্যাক নিচ্ছে
+    hero: dbContent?.hero?.heading_bn ? { ...fallback.hero, ...dbContent.hero } : fallback.hero,
+    about: dbContent?.about?.heading_bn ? { ...fallback.about, ...dbContent.about } : fallback.about,
+    cta: dbContent?.cta?.heading_bn ? { ...fallback.cta, ...dbContent.cta } : fallback.cta,
+    brand: dbContent?.brand?.name_bn ? { ...fallback.brand, ...dbContent.brand } : fallback.brand,
+    contact: dbContent?.contact?.phone ? { ...fallback.contact, ...dbContent.contact } : fallback.contact,
+    footerCopy: dbContent?.footerCopy?.text_bn ? { ...fallback.footerCopy, ...dbContent.footerCopy } : fallback.footerCopy,
+    
+    // ব্যাকগ্রাউন্ড ম্যাপ
+    backgrounds: dbContent?.backgrounds || {},
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header content={content} locale={locale} />
+      <main>
+        <Hero content={content} locale={locale} />
+        <Stats content={content} locale={locale} />
+        <About content={content} locale={locale} />
+        <Features content={content} locale={locale} />
+        <Management content={content} locale={locale} />
+        <Teachers content={content} locale={locale} />
+        <Testimonials content={content} locale={locale} />
+        <CTA content={content} locale={locale} />
+        <FAQ content={content} locale={locale} />
+        <Pricing content={content} locale={locale} />
       </main>
-    </div>
+      <Footer content={content} locale={locale} />
+    </>
   );
 }

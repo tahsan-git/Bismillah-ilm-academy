@@ -1,0 +1,67 @@
+{
+  "common": {
+    "trial_class": "Trial Class Form",
+    "take_trial": "Take a Free Trial Class",
+    "view_more": "View more",
+    "learn_more": "Learn more",
+    "contact_us": "Contact us",
+    "call": "Call",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "login": "Login",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "upload": "Upload image",
+    "loading": "Loading...",
+    "language": "Language"
+  },
+  "sections": {
+    "why_choose": "Why Choose Us",
+    "why_choose_eyebrow": "Our Features",
+    "management": "Management Team",
+    "management_heading": "The people behind Bismillah's success",
+    "teachers": "Teachers Team",
+    "teachers_heading": "Our exceptional teachers",
+    "testimonials": "Guardian Testimonials",
+    "testimonials_heading": "What guardians think about us",
+    "faq": "Frequently Asked Questions",
+    "faq_eyebrow": "Your questions, our answers",
+    "pricing": "Pricing Model",
+    "pricing_heading": "Choose your preferred plan",
+    "teachers_view_all": "View teachers",
+    "pricing_view_all": "View pricing plans"
+  },
+  "footer": {
+    "academy": "Academy",
+    "others": "Others",
+    "contact": "Contact"
+  },
+  "stats": {
+    "students": "Students",
+    "teachers": "Teachers",
+    "hours": "Class Hours",
+    "experience": "Experience"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "hero": "Hero Section",
+    "about": "About",
+    "stats": "Counters",
+    "features": "Features",
+    "management": "Management",
+    "teachers": "Teachers",
+    "testimonials": "Testimonials",
+    "faq": "FAQ",
+    "pricing": "Pricing",
+    "cta": "CTA Banner",
+    "nav": "Navigation",
+    "footer": "Footer",
+    "settings": "Settings",
+    "welcome": "Welcome, admin",
+    "logged_in_as": "Logged in as"
+  }
+}

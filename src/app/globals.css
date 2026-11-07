@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* সাইটের মূল কালার (সবুজ) */
+  --color-brand: #4CAF50; 
+  --color-brand-dark: #388E3C; 
+  
+  /* অন্যান্য কালার */
+  --color-accent: #f29607;
+  --color-ink: #1e293b;
+  --color-body: #334155;
+  --color-soft: #F0F5FA;
+  --color-mint: #48CAE4;
+  --color-soft2: #F8FAFC;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    /* বাংলা ফন্ট Hind Siliguri এবং সিস্টেম ফন্ট */
+    font-family: var(--font-bengali), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    scroll-behavior: smooth;
+  }
+  body {
+    color: var(--color-body);
+    background: #ffffff;
+    line-height: 1.65;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-ink);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  ::selection {
+    background: var(--color-brand);
+    color: #fff;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =========================================
+   কাস্টম অ্যানিমেশন (Custom Animations)
+========================================= */
+
+/* উপরে ভেসে আসা */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* বাউন্স এফেক্ট */
+@keyframes bounceIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { opacity: 1; transform: scale(1.05); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* সাইড থেকে আসা (Left & Right) */
+@keyframes slideInLeftCard {
+  0% { opacity: 0; transform: translateX(-50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ম্যানেজমেন্ট এবং টিচারদের অটো-স্ক্রল */
+@keyframes slideAuto {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-240px * 8)); } /* ৮টি কার্ডের জন্য */
+}
+
+/* অ্যানিমেশন ক্লাস */
+.animate-fade-up    { animation: fadeUp 0.7s ease-out both; }
+.animate-fade-in    { animation: fadeIn 0.7s ease-out both; }
+.animate-bounce-in  { animation: bounceIn 0.8s ease-out both; }
+.animate-card-left  { animation: slideInLeftCard 1s ease-out both; }
+.animate-text-up    { animation: fadeUp 1s ease-out both; animation-delay: 0.3s; }
+.animate-slide-right { animation: slideInRight 0.7s ease-out both; }
+.animate-slide      { animation: slideAuto 30s linear infinite; }
+
+/* মাউস হোভার করলে স্ক্রল থেমে যাবে */
+.animate-slide:hover {
+  animation-play-state: paused; 
+}
+
+/* ডিলে (Delay) ক্লাস */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* কাস্টম স্ক্রলবার লুকানো (হরাইজন্টাল স্ক্রলের জন্য) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
