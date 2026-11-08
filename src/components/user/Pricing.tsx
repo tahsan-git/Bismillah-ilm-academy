@@ -33,7 +33,7 @@ export function Pricing({ content, locale }: { content: Content; locale: Locale 
                   <span className="text-sm text-slate-500 transition-colors duration-300 group-hover:text-white/80"> /month</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
-                  {(locale === "bn" ? plan.features_bn : plan.features_en).map((f, idx) => (
+                  {(locale === "bn" ? plan.features_bn : plan.features_en)?.map((f, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <Check size={18} className="text-[#4CAF50] shrink-0 mt-0.5 transition-colors duration-300 group-hover:text-white" />
                       <span className="text-sm text-body font-medium transition-colors duration-300 group-hover:text-white">

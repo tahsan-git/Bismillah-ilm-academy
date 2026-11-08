@@ -24,7 +24,7 @@ export default async function Home() {
     console.error("Database fetch failed:", error);
   }
 
-  // 🌟 ফ্যালব্যাক ডাটা
+  // 🌟 ফ্যালব্যাক ডাটা (যদি ডাটাবেস থেকে ডাটা না আসে)
   const fallback: any = {
     nav: [
       { id: "1", label_bn: "হোম", label_en: "Home", href: "/", is_cta: false },
@@ -34,14 +34,26 @@ export default async function Home() {
       { id: "5", label_bn: "যোগাযোগ", label_en: "Contact", href: "#faq", is_cta: false },
       { id: "6", label_bn: "ট্রায়াল ক্লাস ফরম", label_en: "Trial Class Form", href: "/trial-class", is_cta: true },
     ],
-    hero: { heading_bn: "বিসমিল্লাহ ইলম একাডেমি", heading_en: "Bismillah", eyebrow_bn: "স্বাগতম", eyebrow_en: "Welcome", body_bn: "কুরআন শিক্ষার নির্ভরযোগ্য প্রতিষ্ঠান।", body_en: "Trusted Quran Academy", cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class", image_url: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?w=1600" },
+    hero: { 
+      heading_bn: "বিসমিল্লাহ ইলম একাডেমি", heading_en: "Bismillah", 
+      eyebrow_bn: "স্বাগতম", eyebrow_en: "Welcome", 
+      body_bn: "কুরআন শিক্ষার নির্ভরযোগ্য প্রতিষ্ঠান।", body_en: "Trusted Quran Academy", 
+      cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class", 
+      image_url: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?w=1600" 
+    },
     stats: [
       { id: "1", label_bn: "শিক্ষার্থী", label_en: "Students", value: 1200, suffix: "+", suffix_bn: "+", icon_key: "students" },
       { id: "2", label_bn: "শিক্ষক", label_en: "Teachers", value: 100, suffix: "+", suffix_bn: "+", icon_key: "teachers" },
       { id: "3", label_bn: "ক্লাস আওয়ার", label_en: "Hours", value: 300, suffix: "ঘণ্টা", suffix_bn: "ঘণ্টা", icon_key: "hours" },
       { id: "4", label_bn: "অভিজ্ঞতা", label_en: "Experience", value: 6, suffix: "বছর", suffix_bn: "বছর", icon_key: "experience" },
     ],
-    about: { heading_bn: "আমাদের সম্পর্কে", heading_en: "About Us", eyebrow_bn: "জানুন", eyebrow_en: "Learn", body_bn: "বিসমিল্লাহ ইলম একাডেমি একটি অনলাইন কুরআন শিক্ষার প্রতিষ্ঠান।", body_en: "Bismillah is an online academy", image_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800", cta_label_bn: "আরও জানুন", cta_label_en: "Read More", cta_href: "/" },
+    about: { 
+      heading_bn: "আমাদের সম্পর্কে", heading_en: "About Us", 
+      eyebrow_bn: "জানুন", eyebrow_en: "Learn", 
+      body_bn: "বিসমিল্লাহ ইলম একাডেমি একটি অনলাইন কুরআন শিক্ষার প্রতিষ্ঠান।", body_en: "Bismillah is an online academy", 
+      image_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800", 
+      cta_label_bn: "আরও জানুন", cta_label_en: "Read More", cta_href: "/" 
+    },
     features: [
       { id: "1", icon_key: "one-to-one", title_bn: "ওয়ান টু ওয়ান সিস্টেম", title_en: "One-to-One", body_bn: "ক্লাসে শুধুমাত্র একজন শিক্ষার্থী এবং একজন শিক্ষক থাকবেন।", body_en: "One student and one teacher." },
       { id: "2", icon_key: "trial", title_bn: "ফ্রি ট্রায়াল ক্লাস", title_en: "Free Trial", body_bn: "ভর্তির পূর্বেই ৩০মিনিট এর ফ্রি ট্রায়াল ক্লাস এর সুযোগ।", body_en: "Free 30 min trial class." },
@@ -57,18 +69,32 @@ export default async function Home() {
       { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
       { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
     ],
-    cta: { eyebrow_bn: "যুক্ত হোন", eyebrow_en: "Join", heading_bn: "কুরআনের পথে যাত্রা শুরু হোক", heading_en: "Start your journey", primary_label_bn: "ট্রায়াল ক্লাস", primary_label_en: "Trial", primary_href: "/trial-class", secondary_label_bn: "শিক্ষক হোন", secondary_label_en: "Teacher", secondary_href: "/teacher-application" },
+    cta: { 
+      eyebrow_bn: "যুক্ত হোন", eyebrow_en: "Join", 
+      heading_bn: "কুরআনের পথে যাত্রা শুরু হোক", heading_en: "Start your journey", 
+      primary_label_bn: "ট্রায়াল ক্লাস", primary_label_en: "Trial", primary_href: "/trial-class", 
+      secondary_label_bn: "শিক্ষক হোন", secondary_label_en: "Teacher", secondary_href: "/teacher-application" 
+    },
     footer: [],
     brand: { name_bn: "বিসমিল্লাহ ইলম একাডেমি", name_en: "Bismillah Ilm Academy", tagline_bn: "কুরআনের সাথে জান্নাতের পথে", tagline_en: "Path to Jannah", logo_url: null },
     contact: { phone: "+8801700000000", phone_display: "+৮৮০ ১৭০০ ০০০ ০০০", email: "info@bismillah.com", whatsapp: "" },
     socials: [{ icon: "facebook", href: "#" }, { icon: "youtube", href: "#" }],
-    footerCopy: { text_bn: "স্বত্ব @ ২০২৪ বিসমিল্লাহ", text_en: "Copyright @ 2024" }
+    footerCopy: { text_bn: "স্বত্ব @ ২০২৪ বিসমিল্লাহ", text_en: "Copyright @ 2024" },
+    
+    // 🌟 ফ্যালব্যাক ব্যাকগ্রাউন্ড ইমেজ
+    backgrounds: {
+      hero: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
+      about: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&q=80&w=1600",
+      features: "https://images.unsplash.com/photo-1597933534024-deb3d5b4b998?auto=format&fit=crop&q=80&w=1600",
+      management: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&q=80&w=1600",
+      faq: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
+      pricing: "https://images.unsplash.com/photo-1597933534024-deb3d5b4b998?auto=format&fit=crop&q=80&w=1600"
+    }
   };
 
   // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (নিরাপদ উপায়ে)
   const content: any = {
     ...fallback,
-    // নেভিগেশন ও লিস্টগুলো ডাটাবেস থেকে নিচ্ছি, না থাকলে ফলব্যাক
     nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
     stats: dbContent?.stats?.length ? dbContent.stats : fallback.stats,
     features: dbContent?.features?.length ? dbContent.features : fallback.features,
@@ -79,7 +105,6 @@ export default async function Home() {
     pricing: dbContent?.pricing?.length ? dbContent.pricing : fallback.pricing,
     footer: dbContent?.footer?.length ? dbContent.footer : fallback.footer,
     
-    // অবজেক্টগুলোর ক্ষেত্রে চেক করছি, ডাটা না থাকলে ফলব্যাক নিচ্ছে
     hero: dbContent?.hero?.heading_bn ? { ...fallback.hero, ...dbContent.hero } : fallback.hero,
     about: dbContent?.about?.heading_bn ? { ...fallback.about, ...dbContent.about } : fallback.about,
     cta: dbContent?.cta?.heading_bn ? { ...fallback.cta, ...dbContent.cta } : fallback.cta,
@@ -87,8 +112,11 @@ export default async function Home() {
     contact: dbContent?.contact?.phone ? { ...fallback.contact, ...dbContent.contact } : fallback.contact,
     footerCopy: dbContent?.footerCopy?.text_bn ? { ...fallback.footerCopy, ...dbContent.footerCopy } : fallback.footerCopy,
     
-    // ব্যাকগ্রাউন্ড ম্যাপ
-    backgrounds: dbContent?.backgrounds || {},
+    // ব্যাকগ্রাউন্ড ম্যাপ (ডাটাবেস থেকে আসলে সেটা নেবে, না আসলে ফ্যালব্যাক)
+    backgrounds: {
+      ...fallback.backgrounds,
+      ...(dbContent?.backgrounds || {})
+    }
   };
 
   return (

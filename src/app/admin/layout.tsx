@@ -34,7 +34,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menuItems = [
     { name: "ড্যাশবোর্ড", href: "/admin", icon: LayoutDashboard },
     { name: "হিরো সেকশন", href: "/admin/hero", icon: ImageIcon },
-    { name: "আমাদের সম্পর্কে", href: "/admin/about", icon: Info },
     { name: "ম্যানেজমেন্ট", href: "/admin/management", icon: Users },
     { name: "প্রশ্নোত্তর (FAQ)", href: "/admin/faq", icon: HelpCircle },
     { name: "প্রাইসিং", href: "/admin/pricing", icon: DollarSign },

@@ -29,16 +29,6 @@ export type Stat = {
   sort_order: number;
 };
 
-export type About = {
-  id: number;
-  eyebrow_bn: string; eyebrow_en: string;
-  heading_bn: string; heading_en: string;
-  body_bn: string;    body_en: string;
-  image_url: string | null;
-  cta_label_bn: string | null; cta_label_en: string | null;
-  cta_href: string | null;
-};
-
 export type Feature = {
   id: string;
   icon_key: string;
@@ -122,7 +112,6 @@ export type Content = {
   nav: NavLink[];
   hero: Hero;
   stats: Stat[];
-  about: About;
   features: Feature[];
   management: TeamMember[];
   teachers: TeamMember[];

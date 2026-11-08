@@ -68,10 +68,10 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* ম্যানেজমেন্ট এবং টিচারদের অটো-স্ক্রল */
+/* ম্যানেজমেন্ট এবং টিচারদের অটো-স্ক্রল (Infinite Marquee) */
 @keyframes slideAuto {
   0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-240px * 8)); } /* ৮টি কার্ডের জন্য */
+  100% { transform: translateX(-50%); } /* ৫০% লুপের জন্য, যা ফাঁকা জায়গা দূর করে */
 }
 
 /* অ্যানিমেশন ক্লাস */
@@ -81,7 +81,11 @@
 .animate-card-left  { animation: slideInLeftCard 1s ease-out both; }
 .animate-text-up    { animation: fadeUp 1s ease-out both; animation-delay: 0.3s; }
 .animate-slide-right { animation: slideInRight 0.7s ease-out both; }
-.animate-slide      { animation: slideAuto 30s linear infinite; }
+
+/* মূল অটো-স্ক্রল অ্যানিমেশন ক্লাস */
+.animate-slide {
+  animation: slideAuto 25s linear infinite;
+}
 
 /* মাউস হোভার করলে স্ক্রল থেমে যাবে */
 .animate-slide:hover {
@@ -98,3 +102,45 @@
 /* কাস্টম স্ক্রলবার লুকানো (হরাইজন্টাল স্ক্রলের জন্য) */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide horizontal scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Teacher carousel (যদি প্রয়োজন হয়) */
+.teacher-track {
+  width: 100%;
+  will-change: transform;
+}
+
+.teacher-card {
+  flex: 0 0 calc((100% - 72px) / 4);
+  min-width: 0;
+  user-select: none;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .teacher-card {
+    flex: 0 0 calc((100% - 24px) / 2);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .teacher-card {
+    flex: 0 0 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teacher-track {
+    transition: none !important;
+  }
+}

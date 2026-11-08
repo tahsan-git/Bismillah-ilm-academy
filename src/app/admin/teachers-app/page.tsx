@@ -1,136 +1,620 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Check, Loader2, Plus, Trash2 } from "lucide-react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  Eye,
+  FileDown,
+  Loader2,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import {
+  getTeacherApplications,
+  approveTeacherApplication,
+  deleteTeacherApplication,
+} from "@/actions/adminTeacherApps";
+
+type TeacherApplication = {
+  id: string;
+  user_id: string | null;
+  name_bn: string | null;
+  name_en: string | null;
+  email: string | null;
+  phone: string | null;
+  role_bn: string | null;
+  role_en: string | null;
+  image_url: string | null;
+  status: string | null;
+  application_data: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type FilterType = "All" | "Pending" | "Active" | "Cancelled";
+
+const statusLabels: Record<string, string> = {
+  Pending: "অপেক্ষমাণ",
+  Active: "অনুমোদিত",
+  Cancelled: "বাতিল",
+};
+
+function formatDate(date: string) {
+  if (!date) return "—";
+
+  return new Date(date).toLocaleString("bn-BD", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "হ্যাঁ" : "না";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(formatValue).join(", ");
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return String(value);
+}
 
 export default function AdminTeacherApps() {
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [applications, setApplications] = useState<TeacherApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({ name: "", email: "", phone: "", image_url: "" });
-  const supabase = createClient();
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>("All");
+  const [search, setSearch] = useState("");
+  const [selectedApplication, setSelectedApplication] =
+    useState<TeacherApplication | null>(null);
+  const [error, setError] = useState("");
 
-  const fetchTeachers = async () => {
+  const fetchApplications = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from("teachers_profile").select("*").order("created_at", { ascending: false });
-    if (data) setTeachers(data);
-    setLoading(false);
-  };
+    setError("");
 
-  useEffect(() => {
-    fetchTeachers();
+    const result = await getTeacherApplications();
+
+    if (result.success) {
+      setApplications(
+        (result.applications || []) as TeacherApplication[]
+      );
+    } else {
+      setError(result.error || "আবেদনগুলো লোড করা যায়নি।");
+    }
+
+    setLoading(false);
   }, []);
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    await supabase.from("teachers_profile").update({ status: newStatus }).eq("id", id);
-    fetchTeachers();
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  const filteredApplications = useMemo(() => {
+    return applications.filter((application) => {
+      const matchesFilter =
+        filter === "All" || application.status === filter;
+
+      const searchText = search.trim().toLowerCase();
+
+      const matchesSearch =
+        !searchText ||
+        [
+          application.name_bn,
+          application.name_en,
+          application.email,
+          application.phone,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(searchText)
+          );
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [applications, filter, search]);
+
+  const counts = useMemo(
+    () => ({
+      All: applications.length,
+      Pending: applications.filter((item) => item.status === "Pending")
+        .length,
+      Active: applications.filter((item) => item.status === "Active")
+        .length,
+      Cancelled: applications.filter(
+        (item) => item.status === "Cancelled"
+      ).length,
+    }),
+    [applications]
+  );
+
+  const handleApprove = async (application: TeacherApplication) => {
+    const confirmed = window.confirm(
+      `আপনি কি ${application.name_bn || application.name_en || "এই আবেদন"}-কে Approve করতে চান?`
+    );
+
+    if (!confirmed) return;
+
+    setActionId(application.id);
+
+    const result = await approveTeacherApplication(application.id);
+
+    if (!result.success) {
+      window.alert(result.error || "Approve করা যায়নি।");
+    } else {
+      window.alert("আবেদনটি সফলভাবে Approve হয়েছে।");
+      await fetchApplications();
+    }
+
+    setActionId(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("আপনি কি নিশ্চিতভাবে এই শিক্ষককে ডিলিট করতে চান?")) {
-      await supabase.from("teachers_profile").delete().eq("id", id);
-      fetchTeachers();
+  const handleDelete = async (application: TeacherApplication) => {
+    const name =
+      application.name_bn || application.name_en || "এই আবেদন";
+
+    const confirmed = window.confirm(
+      `আপনি কি "${name}"-এর আবেদন স্থায়ীভাবে Delete করতে চান?\n\nএতে আবেদন, Teacher Profile এবং সংশ্লিষ্ট Login Account—সব মুছে যাবে। এই কাজটি আর Undo করা যাবে না।`
+    );
+
+    if (!confirmed) return;
+
+    setActionId(application.id);
+
+    const result = await deleteTeacherApplication(application.id);
+
+    if (!result.success) {
+      window.alert(result.error || "Delete করা যায়নি।");
+    } else {
+      if (selectedApplication?.id === application.id) {
+        setSelectedApplication(null);
+      }
+
+      window.alert("আবেদনটি স্থায়ীভাবে Delete করা হয়েছে।");
+      await fetchApplications();
     }
+
+    setActionId(null);
   };
 
-  const handleAddTeacher = async () => {
-    if (!newTeacher.name || !newTeacher.email) {
-      alert("নাম এবং ইমেইল দিতে হবে!");
-      return;
-    }
-    
-    // teachers_profile টেবিলে ডাটা পাঠানো
-    await supabase.from("teachers_profile").insert({
-      name: newTeacher.name,
-      email: newTeacher.email,
-      phone: newTeacher.phone,
-      image_url: newTeacher.image_url,
-      status: "Active" // ম্যানুয়ালি অ্যাড করলে সরাসরি Active হবে
-    });
-    
-    // হোম পেজের teachers টেবিলেও ডাটা পাঠানো
-    await supabase.from("teachers").insert({
-        name_bn: newTeacher.name,
-        name_en: newTeacher.name,
-        role_bn: "শিক্ষক",
-        role_en: "Teacher",
-        image_url: newTeacher.image_url,
-    });
-
-    setIsAdding(false);
-    setNewTeacher({ name: "", email: "", phone: "", image_url: "" });
-    fetchTeachers();
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-ink">শিক্ষক ম্যানেজমেন্ট</h1>
-        <button onClick={() => setIsAdding(true)} className="bg-[#4CAF50] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-[#388E3C]">
-          <Plus size={18} /> নতুন শিক্ষক
+    <div className="space-y-6">
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+
+          .application-print-area,
+          .application-print-area * {
+            visibility: visible !important;
+          }
+
+          .application-print-area {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            padding: 24px !important;
+            background: white !important;
+            color: black !important;
+          }
+
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            শিক্ষক আবেদনসমূহ
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            সকল Pending, Approved এবং Cancelled আবেদন পরিচালনা করুন।
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={fetchApplications}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+        >
+          <RefreshCw
+            size={16}
+            className={loading ? "animate-spin" : ""}
+          />
+          Refresh
         </button>
       </div>
 
-      {isAdding && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6 space-y-4">
-          <h2 className="text-lg font-bold text-ink">নতুন শিক্ষক যোগ করুন</h2>
-          <ImageUpload label="শিক্ষকের ছবি" value={newTeacher.image_url} onChange={(url) => setNewTeacher({ ...newTeacher, image_url: url })} />
-          <div className="grid grid-cols-2 gap-4">
-            <input type="text" placeholder="নাম" value={newTeacher.name} onChange={(e) => setNewTeacher({ ...newTeacher, name: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" />
-            <input type="email" placeholder="ইমেইল" value={newTeacher.email} onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" />
-          </div>
-          <input type="text" placeholder="মোবাইল নম্বর" value={newTeacher.phone} onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" />
-          <div className="flex gap-2">
-            <button onClick={handleAddTeacher} className="bg-[#4CAF50] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#388E3C]">সেভ করুন</button>
-            <button onClick={() => setIsAdding(false)} className="bg-slate-100 text-slate-600 px-6 py-2 rounded-lg font-bold hover:bg-slate-200">বাতিল</button>
-          </div>
+      {/* Status summary */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {(
+          [
+            ["All", "সর্বমোট আবেদন", "text-gray-900"],
+            ["Pending", "অপেক্ষমাণ", "text-amber-600"],
+            ["Active", "অনুমোদিত", "text-green-600"],
+            ["Cancelled", "বাতিল", "text-red-600"],
+          ] as const
+        ).map(([key, label, color]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setFilter(key)}
+            className={`rounded-xl border bg-white p-4 text-left transition ${
+              filter === key
+                ? "border-blue-500 ring-2 ring-blue-100"
+                : "border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <p className="text-sm text-gray-500">{label}</p>
+            <p className={`mt-2 text-2xl font-bold ${color}`}>
+              {counts[key]}
+            </p>
+          </button>
+        ))}
+      </div>
+
+      {/* Search and filter */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="নাম, Gmail অথবা ফোন নম্বর দিয়ে খুঁজুন..."
+            className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500"
+          />
+        </div>
+
+        <select
+          value={filter}
+          onChange={(event) =>
+            setFilter(event.target.value as FilterType)
+          }
+          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+        >
+          <option value="All">সকল আবেদন</option>
+          <option value="Pending">অপেক্ষমাণ</option>
+          <option value="Active">অনুমোদিত</option>
+          <option value="Cancelled">বাতিল</option>
+        </select>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-body">
-            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4">ছবি</th>
-                <th className="px-6 py-4">নাম</th>
-                <th className="px-6 py-4">ইমেইল</th>
-                <th className="px-6 py-4">স্ট্যাটাস</th>
-                <th className="px-6 py-4">একশন</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading && <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-slate-400" /></td></tr>}
-              {!loading && teachers.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-400">কোনো শিক্ষক পাওয়া যায়নি।</td></tr>}
-              {teachers.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
-                    {t.image_url ? <img src={t.image_url} alt="" className="w-10 h-10 rounded-full object-cover" /> : <div className="w-10 h-10 rounded-full bg-slate-200" />}
-                  </td>
-                  <td className="px-6 py-4 font-medium text-ink">{t.name}</td>
-                  <td className="px-6 py-4">{t.email}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${t.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {t.status || 'Pending'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 flex gap-2">
-                    {t.status !== 'Active' && (
-                      <button onClick={() => updateStatus(t.id, 'Active')} className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                        <Check size={14} /> অ্যাপ্রুভ
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(t.id)} className="flex items-center gap-1 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                      <Trash2 size={14} /> ডিলিট
-                    </button>
-                  </td>
+      {/* Applications */}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        {loading ? (
+          <div className="flex min-h-52 items-center justify-center gap-3 text-gray-500">
+            <Loader2 className="animate-spin" size={22} />
+            আবেদন লোড হচ্ছে...
+          </div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
+            <Search size={28} className="mb-3 text-gray-300" />
+            <p className="font-medium text-gray-700">
+              কোনো আবেদন পাওয়া যায়নি।
+            </p>
+            <p className="mt-1 text-sm text-gray-400">
+              অন্য Filter অথবা Search দিয়ে চেষ্টা করুন।
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[850px] text-left text-sm">
+              <thead className="border-b border-gray-200 bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="px-5 py-4 font-semibold">শিক্ষক</th>
+                  <th className="px-5 py-4 font-semibold">যোগাযোগ</th>
+                  <th className="px-5 py-4 font-semibold">আবেদনের তারিখ</th>
+                  <th className="px-5 py-4 font-semibold">Status</th>
+                  <th className="px-5 py-4 text-right font-semibold">
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody className="divide-y divide-gray-100">
+                {filteredApplications.map((application) => {
+                  const status = application.status || "Pending";
+                  const isBusy = actionId === application.id;
+
+                  return (
+                    <tr
+                      key={application.id}
+                      className="transition hover:bg-gray-50"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {application.image_url ? (
+                            <img
+                              src={application.image_url}
+                              alt=""
+                              className="h-10 w-10 rounded-full border border-gray-200 object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 font-bold text-blue-600">
+                              {(application.name_bn ||
+                                application.name_en ||
+                                "T")[0]}
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {application.name_bn ||
+                                application.name_en ||
+                                "নাম নেই"}
+                            </p>
+                            <p className="mt-0.5 text-xs text-gray-500">
+                              {application.role_bn || "শিক্ষক"}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <p className="text-gray-700">
+                          {application.email || "—"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {application.phone || "—"}
+                        </p>
+                      </td>
+
+                      <td className="px-5 py-4 text-gray-600">
+                        {formatDate(application.created_at)}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            status === "Active"
+                              ? "bg-green-50 text-green-700"
+                              : status === "Cancelled"
+                                ? "bg-red-50 text-red-700"
+                                : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {statusLabels[status] || status}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            title="আবেদনের বিস্তারিত"
+                            onClick={() =>
+                              setSelectedApplication(application)
+                            }
+                            className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:bg-gray-100"
+                          >
+                            <Eye size={16} />
+                          </button>
+
+                          {status !== "Active" && (
+                            <button
+                              type="button"
+                              title="Approve"
+                              disabled={isBusy}
+                              onClick={() => handleApprove(application)}
+                              className="rounded-lg border border-green-200 p-2 text-green-700 transition hover:bg-green-50 disabled:opacity-50"
+                            >
+                              {isBusy ? (
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin"
+                                />
+                              ) : (
+                                <Check size={16} />
+                              )}
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            title="স্থায়ীভাবে Delete"
+                            disabled={isBusy}
+                            onClick={() => handleDelete(application)}
+                            className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                          >
+                            {isBusy ? (
+                              <Loader2
+                                size={16}
+                                className="animate-spin"
+                              />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      <p className="text-xs text-gray-400">
+        দেখানো হচ্ছে {filteredApplications.length}টি / মোট{" "}
+        {applications.length}টি আবেদন।
+      </p>
+
+      {/* Application details modal */}
+      {selectedApplication && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedApplication(null);
+            }
+          }}
+        >
+          <div className="application-print-area max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="no-print sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  সম্পূর্ণ আবেদন
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Teacher Application Details
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  <FileDown size={16} />
+                  PDF / Print
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedApplication(null)}
+                  className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              <div className="mb-7 border-b border-gray-200 pb-5 text-center">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Bismillah Ilm Academy
+                </h1>
+                <p className="mt-2 text-sm text-gray-500">
+                  Teacher Registration Application
+                </p>
+              </div>
+
+              <div className="mb-7 flex flex-col items-center gap-3 sm:flex-row">
+                {selectedApplication.image_url && (
+                  <img
+                    src={selectedApplication.image_url}
+                    alt=""
+                    className="h-20 w-20 rounded-full border object-cover"
+                  />
+                )}
+
+                <div className="text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {selectedApplication.name_bn ||
+                      selectedApplication.name_en ||
+                      "নাম নেই"}
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {selectedApplication.role_bn || "শিক্ষক"}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    আবেদন: {formatDate(selectedApplication.created_at)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-7 grid gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="mt-1 break-all font-medium text-gray-900">
+                    {selectedApplication.email || "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">Phone</p>
+                  <p className="mt-1 font-medium text-gray-900">
+                    {selectedApplication.phone || "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">বর্তমান Status</p>
+                  <p className="mt-1 font-medium text-gray-900">
+                    {statusLabels[selectedApplication.status || "Pending"] ||
+                      selectedApplication.status}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">Application ID</p>
+                  <p className="mt-1 break-all font-medium text-gray-900">
+                    {selectedApplication.id}
+                  </p>
+                </div>
+              </div>
+
+              <h3 className="mb-4 border-b border-gray-200 pb-2 font-bold text-gray-900">
+                আবেদনের বিস্তারিত তথ্য
+              </h3>
+
+              {selectedApplication.application_data &&
+              Object.keys(selectedApplication.application_data).length >
+                0 ? (
+                <div className="space-y-3">
+                  {Object.entries(
+                    selectedApplication.application_data
+                  ).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="grid gap-1 border-b border-gray-100 pb-3 sm:grid-cols-[190px_1fr]"
+                    >
+                      <p className="break-words text-sm font-medium text-gray-500">
+                        {key}
+                      </p>
+
+                      <p className="whitespace-pre-wrap break-words text-sm text-gray-900">
+                        {formatValue(value)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">
+                  অতিরিক্ত কোনো তথ্য পাওয়া যায়নি।
+                </p>
+              )}
+
+              <div className="mt-10 border-t border-gray-200 pt-4 text-center text-xs text-gray-400">
+                Bismillah Ilm Academy — Teacher Application
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

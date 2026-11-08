@@ -1,90 +1,168 @@
+
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Lock, Mail, Loader2, Info } from "lucide-react";
+import { findTeacherAuthEmail } from "@/actions/teacherAuth";
+import { Lock, Mail, Loader2, Info, Phone } from "lucide-react";
 import Link from "next/link";
 
 export default function TeacherLogin() {
-  const [email, setEmail] = useState("");
+  const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
   const router = useRouter();
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
     setPending(false);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      // Gmail অথবা ফোন থেকে Auth email খুঁজে বের করা
+      const lookup = await findTeacherAuthEmail(identity);
 
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
+      if (!lookup.success || !lookup.authEmail) {
+        setError(lookup.error || "অ্যাকাউন্ট পাওয়া যায়নি।");
+        setLoading(false);
+        return;
+      }
 
-    if (authData.user) {
-      const { data: teacher } = await supabase
-        .from("teachers_profile")
+      // Supabase Auth দিয়ে password যাচাই
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: lookup.authEmail,
+          password,
+        });
+
+      if (authError || !authData.user) {
+        setError("Gmail/ফোন নম্বর অথবা পাসওয়ার্ড সঠিক নয়।");
+        setLoading(false);
+        return;
+      }
+
+      // Approval status যাচাই
+      const { data: teacher, error: teacherError } = await supabase
+        .from("teachers")
         .select("status")
         .eq("user_id", authData.user.id)
-        .single();
-      
-      if (teacher?.status === "Pending") {
+        .maybeSingle();
+
+      if (teacherError || !teacher || teacher.status !== "Active") {
         await supabase.auth.signOut();
-        setPending(true);
+
+        if (teacher?.status === "Pending") {
+          setPending(true);
+        } else {
+          setError("আপনার অ্যাকাউন্ট এখন সক্রিয় নেই। Admin-এর সঙ্গে যোগাযোগ করুন।");
+        }
+
         setLoading(false);
         return;
       }
 
       router.push("/teacher/dashboard");
       router.refresh();
+    } catch (err) {
+      console.error(err);
+      setError("Login করা যায়নি। আবার চেষ্টা করুন।");
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-soft2 px-5">
-      <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-ink">শিক্ষক প্যানেল</h1>
-          <p className="text-sm text-body mt-2">আপনার অ্যাকাউন্টে লগইন করুন</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+        <div className="mb-7 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Teacher Login
+          </h1>
+          <p className="mt-2 text-sm text-gray-500">
+            আপনার Gmail অথবা ফোন নম্বর দিয়ে প্রবেশ করুন
+          </p>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{error}</div>}
-        {pending && (
-          <div className="bg-orange-50 border border-orange-200 text-orange-700 p-4 rounded-lg text-sm mb-4 flex gap-3 items-start">
-            <Info className="shrink-0 mt-0.5" size={18} />
-            <p>আপনার অ্যাকাউন্টটি এখনো <b>অ্যাডমিন কর্তৃক অনুমোদিত হয়নি</b>। অনুগ্রহ করে অপেক্ষা করুন।</p>
-          </div>
-        )}
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Gmail অথবা ফোন নম্বর
+            </label>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-ink mb-1">ইমেইল</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:border-[#4CAF50] outline-none" placeholder="teacher@example.com" />
+              {identity.includes("@") ? (
+                <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              ) : (
+                <Phone className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              )}
+
+              <input
+                type="text"
+                value={identity}
+                onChange={(e) => setIdentity(e.target.value)}
+                placeholder="Gmail অথবা 017XXXXXXXX"
+                required
+                className="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-4 outline-none focus:border-blue-500"
+              />
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-bold text-ink mb-1">পাসওয়ার্ড</label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Password
+            </label>
+
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:border-[#4CAF50] outline-none" placeholder="••••••••" />
+              <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="আপনার পাসওয়ার্ড"
+                required
+                className="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-4 outline-none focus:border-blue-500"
+              />
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-[#4CAF50] hover:bg-[#388E3C] text-white py-3 rounded-lg font-bold transition flex justify-center items-center gap-2">
-            {loading ? <Loader2 className="animate-spin" size={20} /> : "লগইন করুন"}
+
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {pending && (
+            <div className="flex gap-2 rounded-lg bg-orange-50 p-3 text-sm text-orange-700">
+              <Info className="h-5 w-5 shrink-0" />
+              আপনার আবেদন এখনো Admin অনুমোদন করেননি। অনুমোদনের পর Login করতে পারবেন।
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+          >
+            {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+            {loading ? "অপেক্ষা করুন..." : "Login"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 mt-6">
-          অ্যাকাউন্ট নেই? <Link href="/teacher/register" className="text-[#4CAF50] font-bold">রেজিস্ট্রেশন করুন</Link>
+        <p className="mt-6 text-center text-sm text-gray-500">
+          এখনো আবেদন করেননি?{" "}
+          <Link
+            href="/teacher/register"
+            className="font-semibold text-blue-600 hover:underline"
+          >
+            আবেদন করুন
+          </Link>
         </p>
       </div>
     </div>
