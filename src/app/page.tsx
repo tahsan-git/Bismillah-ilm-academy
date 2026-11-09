@@ -25,7 +25,7 @@ export default async function Home() {
     console.error("Database fetch failed:", error);
   }
 
-  // 🌟 ফ্যালব্যাক ডাটা (যদি ডাটাবেস থেকে ডাটা না আসে)
+  // 🌟 ফ্যালব্যাক ডাটা (about ছাড়া)
   const fallback: any = {
     nav: [
       { id: "1", label_bn: "হোম", label_en: "Home", href: "/", is_cta: false },
@@ -48,13 +48,6 @@ export default async function Home() {
       { id: "3", label_bn: "ক্লাস আওয়ার", label_en: "Hours", value: 300, suffix: "ঘণ্টা", suffix_bn: "ঘণ্টা", icon_key: "hours" },
       { id: "4", label_bn: "অভিজ্ঞতা", label_en: "Experience", value: 6, suffix: "বছর", suffix_bn: "বছর", icon_key: "experience" },
     ],
-    about: { 
-      heading_bn: "আমাদের সম্পর্কে", heading_en: "About Us", 
-      eyebrow_bn: "জানুন", eyebrow_en: "Learn", 
-      body_bn: "বিসমিল্লাহ ইলম একাডেমি একটি অনলাইন কুরআন শিক্ষার প্রতিষ্ঠান।", body_en: "Bismillah is an online academy", 
-      image_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800", 
-      cta_label_bn: "আরও জানুন", cta_label_en: "Read More", cta_href: "/" 
-    },
     features: [
       { id: "1", icon_key: "one-to-one", title_bn: "ওয়ান টু ওয়ান সিস্টেম", title_en: "One-to-One", body_bn: "ক্লাসে শুধুমাত্র একজন শিক্ষার্থী এবং একজন শিক্ষক থাকবেন।", body_en: "One student and one teacher." },
       { id: "2", icon_key: "trial", title_bn: "ফ্রি ট্রায়াল ক্লাস", title_en: "Free Trial", body_bn: "ভর্তির পূর্বেই ৩০মিনিট এর ফ্রি ট্রায়াল ক্লাস এর সুযোগ।", body_en: "Free 30 min trial class." },
@@ -66,9 +59,9 @@ export default async function Home() {
     testimonials: [],
     faqs: [],
     pricing: [
-      { id: "1", name_bn: "বেসিক প্লান", name_en: "Basic Plan", price: 1000, features_bn: ["সপ্তাহে ৩ দিন ক্লাস", "ওয়ান টু ওয়ান"], features_en: ["3 days/week", "1-to-1"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
-      { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
-      { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
+      { id: "1", name_bn: "বেসিক প্লান", name_en: "Basic Plan", price: 1000, features_bn: ["সপ্তাহে ৩ দিন ক্লাস", "ওয়ান টু ওয়ান"], features_en: ["3 days/week", "1-to-1"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/student/register" },
+      { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/student/register" },
+      { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/student/register" },
     ],
     footer: [],
     brand: { name_bn: "বিসমিল্লাহ ইলম একাডেমি", name_en: "Bismillah Ilm Academy", tagline_bn: "কুরআনের সাথে জান্নাতের পথে", tagline_en: "Path to Jannah", logo_url: null },
@@ -78,7 +71,6 @@ export default async function Home() {
     
     backgrounds: {
       hero: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
-      about: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&q=80&w=1600",
       features: "https://images.unsplash.com/photo-1597933534024-deb3d5b4b998?auto=format&fit=crop&q=80&w=1600",
       management: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&q=80&w=1600",
       faq: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
@@ -86,7 +78,7 @@ export default async function Home() {
     }
   };
 
-  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (CTA বাদে)
+  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (about বাদ দিয়ে)
   const content: any = {
     ...fallback,
     nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
@@ -100,7 +92,6 @@ export default async function Home() {
     footer: dbContent?.footer?.length ? dbContent.footer : fallback.footer,
     
     hero: dbContent?.hero?.heading_bn ? { ...fallback.hero, ...dbContent.hero } : fallback.hero,
-    about: dbContent?.about?.heading_bn ? { ...fallback.about, ...dbContent.about } : fallback.about,
     brand: dbContent?.brand?.name_bn ? { ...fallback.brand, ...dbContent.brand } : fallback.brand,
     contact: dbContent?.contact?.phone ? { ...fallback.contact, ...dbContent.contact } : fallback.contact,
     footerCopy: dbContent?.footerCopy?.text_bn ? { ...fallback.footerCopy, ...dbContent.footerCopy } : fallback.footerCopy,
@@ -117,7 +108,10 @@ export default async function Home() {
       <main>
         <Hero content={content} locale={locale} />
         <Stats content={content} locale={locale} />
+        
+        {/* 🌟 About এখন স্ট্যাটিক, তাই ডাটা পাস না করলেও চলবে (তবে props ফাঁকা রাখলে এরর দিতে পারে, তাই props পাঠানো হলো) */}
         <About content={content} locale={locale} />
+        
         <Features content={content} locale={locale} />
         <Management content={content} locale={locale} />
         <Teachers content={content} locale={locale} />
