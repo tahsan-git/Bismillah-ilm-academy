@@ -1,21 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
-  Content, NavLink, Hero, Stat, About, Feature, TeamMember,
-  Testimonial, FAQ, PricingPlan, CtaBanner, FooterColumn,
-  BrandSettings, ContactSettings, SocialLink, FooterCopy,
+  Content, NavLink, Hero, Stat, Feature, TeamMember,
+  Testimonial, FAQ, PricingPlan, CtaBanner,
 } from "@/lib/types";
 
 export async function getContent(): Promise<Content> {
   const sb = await createClient();
 
   const [
-    nav, hero, stats, about, features, management, teachers,
-    testimonials, faqs, pricing, cta, footer, settings, backgrounds,
+    nav, hero, stats, features, management, teachers,
+    testimonials, faqs, pricing, cta, backgrounds,
   ] = await Promise.all([
     sb.from("nav_links").select("*").eq("is_visible", true).order("sort_order"),
     sb.from("hero").select("*").eq("id", 1).maybeSingle(),
     sb.from("stats").select("*").order("sort_order"),
-    sb.from("about").select("*").eq("id", 1).maybeSingle(), // 🌟 About যুক্ত করা হলো
     sb.from("features").select("*").order("sort_order"),
     sb.from("management").select("*").order("sort_order"),
     
@@ -29,15 +27,8 @@ export async function getContent(): Promise<Content> {
     sb.from("faqs").select("*").order("sort_order"),
     sb.from("pricing_plans").select("*").order("sort_order"),
     sb.from("cta_banner").select("*").eq("id", 1).maybeSingle(),
-    sb.from("footer_columns").select("*").order("sort_order"),
-    sb.from("site_settings").select("*"),
-    sb.from("section_backgrounds").select("*"), // 🌟 একবারই রাখা হলো
+    sb.from("section_backgrounds").select("*"),
   ]);
-
-  const settingsMap: Record<string, unknown> = {};
-  for (const row of settings.data ?? []) {
-    settingsMap[row.key] = row.value;
-  }
 
   const bgMap: Record<string, string> = {};
   for (const row of backgrounds.data ?? []) {
@@ -61,20 +52,6 @@ export async function getContent(): Promise<Content> {
     }) as Hero,
 
     stats: (stats.data ?? []) as Stat[],
-
-    about: (about.data ?? {
-      heading_bn: "আমাদের সম্পর্কে",
-      heading_en: "About Us",
-      eyebrow_bn: "আমাদের সম্পর্কে",
-      eyebrow_en: "About",
-      body_bn: "বডি টেক্সট",
-      body_en: "Body text",
-      image_url: null,
-      cta_label_bn: null,
-      cta_label_en: null,
-      cta_href: null,
-    }) as About,
-
     features: (features.data ?? []) as Feature[],
     management: (management.data ?? []) as TeamMember[],
     teachers: (teachers.data ?? []) as TeamMember[],
@@ -95,30 +72,6 @@ export async function getContent(): Promise<Content> {
       secondary_href: "/",
     }) as CtaBanner,
 
-    footer: (footer.data ?? []) as FooterColumn[],
-
-    brand: (settingsMap.brand ?? {
-      name_bn: "বিসমিল্লাহ ইলম একাডেমি",
-      name_en: "Bismillah Ilm Academy",
-      tagline_bn: "কুরআনের সাথে জান্নাতের পথে",
-      tagline_en: "On the path to Jannah with the Quran",
-      logo_url: null,
-    }) as BrandSettings,
-
-    contact: (settingsMap.contact ?? {
-      phone: "",
-      phone_display: "",
-      email: "",
-      whatsapp: "",
-    }) as ContactSettings,
-
-    socials: (settingsMap.socials ?? []) as SocialLink[],
-
-    footerCopy: (settingsMap.footer_copy ?? {
-      text_bn: "স্বত্ব @ ২০২৪",
-      text_en: "Copyright @ 2024",
-    }) as FooterCopy,
-
     backgrounds: bgMap,
-  };
+  } as Content;
 }

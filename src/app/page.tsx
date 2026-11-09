@@ -25,7 +25,7 @@ export default async function Home() {
     console.error("Database fetch failed:", error);
   }
 
-  // 🌟 ফ্যালব্যাক ডাটা
+  // 🌟 ফ্যালব্যাক ডাটা (footer, brand, contact ছাড়া)
   const fallback: any = {
     nav: [
       { id: "1", label_bn: "হোম", label_en: "Home", href: "/", is_cta: false },
@@ -63,12 +63,12 @@ export default async function Home() {
       { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/student/register" },
       { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/student/register" },
     ],
-    footer: [],
-    brand: { name_bn: "বিসমিল্লাহ ইলম একাডেমি", name_en: "Bismillah Ilm Academy", tagline_bn: "কুরআনের সাথে জান্নাতের পথে", tagline_en: "Path to Jannah", logo_url: null },
-    contact: { phone: "+8801700000000", phone_display: "+৮৮০ ১৭০০ ০০০ ০০০", email: "info@bismillah.com", whatsapp: "" },
-    socials: [{ icon: "facebook", href: "#" }, { icon: "youtube", href: "#" }],
-    footerCopy: { text_bn: "স্বত্ব @ ২০২৪ বিসমিল্লাহ", text_en: "Copyright @ 2024" },
-    
+    cta: {
+      eyebrow_bn: "যুক্ত হোন", eyebrow_en: "Join",
+      heading_bn: "কুরআনের পথে যাত্রা শুরু হোক বিসমিল্লাহ ইলম একাডেমির সাথে...", heading_en: "Start your journey...",
+      primary_label_bn: "ট্রায়াল ক্লাস", primary_label_en: "Trial", primary_href: "/student/register",
+      secondary_label_bn: "শিক্ষক হোন", secondary_label_en: "Teacher", secondary_href: "/teacher/register"
+    },
     backgrounds: {
       hero: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
       features: "https://images.unsplash.com/photo-1597933534024-deb3d5b4b998?auto=format&fit=crop&q=80&w=1600",
@@ -78,7 +78,7 @@ export default async function Home() {
     }
   };
 
-  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া
+  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (footer, brand, contact ছাড়া)
   const content: any = {
     ...fallback,
     nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
@@ -89,12 +89,9 @@ export default async function Home() {
     testimonials: dbContent?.testimonials?.length ? dbContent.testimonials : fallback.testimonials,
     faqs: dbContent?.faqs?.length ? dbContent.faqs : fallback.faqs,
     pricing: dbContent?.pricing?.length ? dbContent.pricing : fallback.pricing,
-    footer: dbContent?.footer?.length ? dbContent.footer : fallback.footer,
     
     hero: dbContent?.hero?.heading_bn ? { ...fallback.hero, ...dbContent.hero } : fallback.hero,
-    brand: dbContent?.brand?.name_bn ? { ...fallback.brand, ...dbContent.brand } : fallback.brand,
-    contact: dbContent?.contact?.phone ? { ...fallback.contact, ...dbContent.contact } : fallback.contact,
-    footerCopy: dbContent?.footerCopy?.text_bn ? { ...fallback.footerCopy, ...dbContent.footerCopy } : fallback.footerCopy,
+    cta: dbContent?.cta?.heading_bn ? { ...fallback.cta, ...dbContent.cta } : fallback.cta,
     
     backgrounds: {
       ...fallback.backgrounds,
@@ -108,24 +105,17 @@ export default async function Home() {
       <main>
         <Hero content={content} locale={locale} />
         <Stats content={content} locale={locale} />
-        
-        {/* 🌟 About এখন স্ট্যাটিক, তাই কোনো props নেই */}
         <About />
-        
         <Features content={content} locale={locale} />
         <Management content={content} locale={locale} />
         <Teachers content={content} locale={locale} />
-        
         <FemaleTeachers content={content} locale={locale} />
-        
         <Testimonials content={content} locale={locale} />
-        
         <CTA /> 
-        
         <FAQ content={content} locale={locale} />
         <Pricing content={content} locale={locale} />
       </main>
-      <Footer/>
+      <Footer />
     </>
   );
 }

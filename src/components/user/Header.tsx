@@ -69,12 +69,18 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           </Link>
 
           {/* Language Switcher */}
+          {/* 🌟 ল্যাঙ্গুয়েজ বাটন (আপাতত শুধু ডিজাইনের জন্য, ক্লিক করলে হোম পেজে থাকবে) */}
           <Link
-            href={locale === "bn" ? "/en" : "/"}
-            className="flex items-center gap-1 border-l border-slate-300 pl-5 text-sm font-bold text-[#1E293B] transition hover:text-[#4CAF50]"
+            href="/"
+            className="flex items-center gap-1 text-sm font-bold text-slate-400 cursor-not-allowed border-l border-slate-300 pl-4 lg:pl-6"
+            onClick={(e) => {
+              e.preventDefault();
+              // ক্লিক করলে পেজ রিলোড হয়ে হোম পেজে থাকবে
+              window.location.href = "/";
+            }}
           >
             <Globe size={16} />
-            {locale === "bn" ? "English" : "বাংলা"}
+            English
           </Link>
 
           {/* CTA Button */}
