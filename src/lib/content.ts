@@ -22,7 +22,7 @@ export async function getContent(): Promise<Content> {
     // শুধু Active শিক্ষক দেখাবে
     sb.from("teachers_profile")
       .select("*")
-      .eq("status", "Active")
+      .ilike("status", "active")
       .order("created_at", { ascending: true }),
 
     sb.from("testimonials").select("*").order("sort_order"),

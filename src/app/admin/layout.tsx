@@ -13,7 +13,10 @@ import {
   DollarSign, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  BarChart3,
+  Gift,
+  MessageSquare
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -34,11 +37,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menuItems = [
     { name: "ড্যাশবোর্ড", href: "/admin", icon: LayoutDashboard },
     { name: "হিরো সেকশন", href: "/admin/hero", icon: ImageIcon },
+    { name: "স্ট্যাটস (কাউন্টার)", href: "/admin/stats", icon: BarChart3 },
+    { name: "ফিচার (বৈশিষ্ট্য)", href: "/admin/features", icon: Gift }, 
     { name: "ম্যানেজমেন্ট", href: "/admin/management", icon: Users },
+    { name: "শিক্ষক-শিক্ষিকা", href: "/admin/teachers", icon: GraduationCap },
     { name: "প্রশ্নোত্তর (FAQ)", href: "/admin/faq", icon: HelpCircle },
+    { name: "মন্তব্য (Testimonials)", href: "/admin/testimonials", icon: MessageSquare },
     { name: "প্রাইসিং", href: "/admin/pricing", icon: DollarSign },
     { name: "ট্রায়াল আবেদন", href: "/admin/trials", icon: Users },
     { name: "শিক্ষক আবেদন", href: "/admin/teachers-app", icon: GraduationCap },
+    { name: "শিক্ষার্থী আবেদন", href: "/admin/students", icon: Users }, 
   ];
 
   return (

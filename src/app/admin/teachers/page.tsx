@@ -1,119 +1,296 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Save, Loader2, Plus, Trash2, Check } from "lucide-react";
+import { Loader2, Upload, Trash2, Plus } from "lucide-react";
 
 export default function AdminTeachers() {
-  const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  
+  const [teachers, setTeachers] = useState<any[]>([]);
+  
+  // 🌟 দুইটি আলাদা ব্যাকগ্রাউন্ড স্টেট
+  const [bgMale, setBgMale] = useState("");
+  const [bgFemale, setBgFemale] = useState("");
+  const [uploadingBg, setUploadingBg] = useState<string | null>(null);
+  
   const supabase = createClient();
 
-  const fetchTeachers = async () => {
-    setLoading(true);
-    const { data } = await supabase.from("teachers").select("*").order("created_at", { ascending: false });
-    if (data) setTeachers(data);
-    setLoading(false);
+  useEffect(() => {
+    const fetchData = async () => {
+      const [teachersData, maleBgData, femaleBgData] = await Promise.all([
+        supabase.from("teachers_profile").select("*").order("created_at", { ascending: false }),
+        supabase.from("section_backgrounds").select("*").eq("section_key", "teachers_male").maybeSingle(),
+        supabase.from("section_backgrounds").select("*").eq("section_key", "teachers_female").maybeSingle(),
+      ]);
+      
+      if (teachersData.data) setTeachers(teachersData.data);
+      if (maleBgData.data) setBgMale(maleBgData.data.image_url || "");
+      if (femaleBgData.data) setBgFemale(femaleBgData.data.image_url || "");
+      
+      setLoading(false);
+    };
+    fetchData();
+  }, [supabase]);
+
+  // ব্যাকগ্রাউন্ড আপলোড (মেইল বা ফিমেইল)
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "male" | "female") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBg(type);
+    
+    const sectionKey = type === "male" ? "teachers_male" : "teachers_female";
+    const oldUrl = type === "male" ? bgMale : bgFemale;
+    const fileName = `${sectionKey}-bg-${Date.now()}.${file.name.split('.').pop()}`;
+    
+    try {
+      const { error } = await supabase.storage.from("site-images").upload(fileName, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("site-images").getPublicUrl(fileName);
+      
+      if (oldUrl && oldUrl.includes("site-images")) {
+        const oldPath = oldUrl.split("/").pop();
+        if (oldPath) await supabase.storage.from("site-images").remove([oldPath]);
+      }
+      
+      if (type === "male") setBgMale(data.publicUrl);
+      else setBgFemale(data.publicUrl);
+      
+      await supabase.from("section_backgrounds").upsert(
+        { section_key: sectionKey, image_url: data.publicUrl }, 
+        { onConflict: 'section_key' }
+      );
+    } catch (error: any) {
+      alert("ব্যাকগ্রাউন্ড আপলোডে সমস্যা: " + error.message);
+    } finally {
+      setUploadingBg(null);
+    }
   };
 
-  useEffect(() => { fetchTeachers(); }, []);
-
-  const handleSave = async (t: any, index: number) => {
-    setSaving(true);
-    const safeName = t.name_bn || "নতুন শিক্ষক";
-    const safeRole = t.role_bn || "শিক্ষক";
-
-    if (t.id) {
-      // আপডেট
-      await supabase.from("teachers").update({
-        name_bn: safeName, name_en: safeName,
-        role_bn: safeRole, role_en: "Teacher",
-        image_url: t.image_url,
-        status: t.status || "Active"
-      }).eq("id", t.id);
-    } else {
-      // নতুন ইনসার্ট
-      await supabase.from("teachers").insert({
-        name_bn: safeName, name_en: safeName,
-        role_bn: safeRole, role_en: "Teacher",
-        image_url: t.image_url,
+  // নতুন শিক্ষক যোগ করা
+  const handleAddTeacher = () => {
+    setTeachers([
+      {
+        id: `new-${Date.now()}`,
+        name: "",
+        role_bn: "শিক্ষক",
+        role_en: "Teacher",
+        gender: "male",
         status: "Active",
-      });
+        image_url: "",
+        created_at: new Date().toISOString(),
+      },
+      ...teachers,
+    ]);
+  };
+
+  // শিক্ষকের ছবি আপলোড
+  const handleTeacherImage = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingId(id);
+    const fileName = `teacher-${id}-${Date.now()}.${file.name.split('.').pop()}`;
+    
+    try {
+      const { error: uploadError } = await supabase.storage.from("site-images").upload(fileName, file);
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage.from("site-images").getPublicUrl(fileName);
+      
+      const oldImg = teachers.find(t => t.id === id)?.image_url;
+      if (oldImg && oldImg.includes("site-images")) {
+        const oldPath = oldImg.split("/").pop();
+        if (oldPath) await supabase.storage.from("site-images").remove([oldPath]);
+      }
+
+      setTeachers((prev) => 
+        prev.map(t => t.id === id ? { ...t, image_url: data.publicUrl } : t)
+      );
+      
+    } catch (error: any) {
+      alert("ছবি আপলোডে সমস্যা: " + error.message);
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  // শিক্ষক ডিলিট করা
+  const handleDeleteTeacher = async (id: string, imageUrl: string | null) => {
+    if (!confirm("আপনি কি নিশ্চিত এই শিক্ষককে ডিলিট করতে চান?")) return;
+    
+    if (!id.startsWith("new-")) {
+      await supabase.from("teachers_profile").delete().eq("id", id);
     }
     
-    alert("সফলভাবে সেভ হয়েছে!");
-    setSaving(false);
-    fetchTeachers();
+    if (imageUrl && imageUrl.includes("site-images")) {
+      const path = imageUrl.split("/").pop();
+      if (path) await supabase.storage.from("site-images").remove([path]);
+    }
+
+    setTeachers((prev) => prev.filter(t => t.id !== id));
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("শিক্ষককে ডিলিট করতে চান?")) {
-      await supabase.from("teachers").delete().eq("id", id);
-      fetchTeachers();
+  // সব সেভ করা
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const t of teachers) {
+        if (!t.name) {
+          alert("অনুগ্রহ করে ফাঁকা কার্ডের নাম পূরণ করুন।");
+          setSaving(false);
+          return;
+        }
+
+        const payload: any = {
+          name: t.name,
+          role_bn: t.role_bn,
+          role_en: t.role_en,
+          gender: t.gender,
+          status: t.status,
+          image_url: t.image_url,
+        };
+
+        if (!t.id.startsWith("new-")) {
+          payload.id = t.id;
+        }
+
+        const { error } = await supabase.from("teachers_profile").upsert(payload, { 
+          onConflict: 'id' 
+        });
+
+        if (error) {
+          alert(`সেভ করতে সমস্যা: ${error.message}`);
+          throw error;
+        }
+      }
+      alert("সফলভাবে সেভ হয়েছে!");
+      window.location.reload();
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    await supabase.from("teachers").update({ status: newStatus }).eq("id", id);
-    fetchTeachers();
-  };
-
-  const addNew = () => {
-    setTeachers([{ name_bn: "", role_bn: "শিক্ষক", image_url: "", status: "Active" }, ...teachers]);
-  };
-
-  if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#4CAF50]" size={40} /></div>;
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-ink">শিক্ষক ম্যানেজমেন্ট</h1>
-        <button onClick={addNew} className="bg-[#4CAF50] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-[#388E3C]">
-          <Plus size={18} /> নতুন শিক্ষক
+    <div className="max-w-6xl pb-20">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-ink">শিক্ষক-শিক্ষিকা এডিটর</h1>
+        <button onClick={handleSave} disabled={saving} className="bg-[#4CAF50] hover:bg-[#388E3C] text-white px-8 py-2.5 rounded-lg font-bold transition flex items-center gap-2 shadow-md">
+          {saving ? <Loader2 className="animate-spin" size={18} /> : "সব সেভ করুন"}
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {teachers.map((t, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative group">
-            
-            <button onClick={() => handleDelete(t.id)} className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
-              <Trash2 size={18} />
-            </button>
-
-            <div className="space-y-4">
-              <ImageUpload label="শিক্ষকের ছবি" value={t.image_url || ""} onChange={(url) => {
-                const newT = [...teachers]; newT[i].image_url = url; setTeachers(newT);
-              }} />
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1">নাম</label>
-                <input type="text" value={t.name_bn || ""} onChange={(e) => {
-                  const newT = [...teachers]; newT[i].name_bn = e.target.value; setTeachers(newT);
-                }} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" />
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="space-y-6">
+          {/* 🌟 পুরুষ শিক্ষকদের ব্যাকগ্রাউন্ড */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 className="text-lg font-bold mb-4">শিক্ষক সেকশনের ব্যাকগ্রাউন্ড</h2>
+            {bgMale ? (
+              <div className="relative w-full h-32 rounded-xl overflow-hidden group border border-slate-200">
+                <img src={bgMale} alt="BG Male" className="w-full h-full object-cover" />
+                <button onClick={() => setBgMale("")} className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition z-20">
+                  <Trash2 size={16} />
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1">পদবি</label>
-                <input type="text" value={t.role_bn || ""} onChange={(e) => {
-                  const newT = [...teachers]; newT[i].role_bn = e.target.value; setTeachers(newT);
-                }} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1">স্ট্যাটাস</label>
-                <select value={t.status || "Active"} onChange={(e) => {
-                  const newT = [...teachers]; newT[i].status = e.target.value; setTeachers(newT);
-                }} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none">
-                  <option value="Active">Active (হোম পেজে দেখাবে)</option>
-                  <option value="Pending">Pending (লুকানো থাকবে)</option>
-                </select>
-              </div>
-
-              <button onClick={() => handleSave(t, i)} disabled={saving} className="w-full bg-[#4CAF50] text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-[#388E3C]">
-                {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} সেভ করুন
-              </button>
-            </div>
+            ) : (
+              <label className="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition overflow-hidden">
+                {uploadingBg === "male" ? <Loader2 className="animate-spin text-[#4CAF50] mb-1" /> : <Upload className="text-slate-400 mb-1" size={18} />}
+                <p className="text-xs text-slate-500">আপলোড করুন</p>
+                <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleBgUpload(e, "male")} title="" />
+              </label>
+            )}
           </div>
-        ))}
+
+          {/* 🌟 মহিলা শিক্ষকদের ব্যাকগ্রাউন্ড */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 className="text-lg font-bold mb-4">শিক্ষিকা সেকশনের ব্যাকগ্রাউন্ড</h2>
+            {bgFemale ? (
+              <div className="relative w-full h-32 rounded-xl overflow-hidden group border border-slate-200">
+                <img src={bgFemale} alt="BG Female" className="w-full h-full object-cover" />
+                <button onClick={() => setBgFemale("")} className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition z-20">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ) : (
+              <label className="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition overflow-hidden">
+                {uploadingBg === "female" ? <Loader2 className="animate-spin text-[#4CAF50] mb-1" /> : <Upload className="text-slate-400 mb-1" size={18} />}
+                <p className="text-xs text-slate-500">আপলোড করুন</p>
+                <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleBgUpload(e, "female")} title="" />
+              </label>
+            )}
+          </div>
+        </div>
+
+        <div className="md:col-span-2 space-y-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-bold">শিক্ষক লিস্ট</h2>
+            <button onClick={handleAddTeacher} className="text-sm font-bold text-[#4CAF50] flex items-center gap-1 hover:underline">
+              <Plus size={16} /> নতুন শিক্ষক
+            </button>
+          </div>
+          
+          <div className="grid gap-4">
+            {teachers.map((t) => (
+              <div key={t.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row gap-6 items-start shadow-sm relative group">
+                
+                <div className="w-24 h-28 rounded-xl overflow-hidden bg-slate-100 relative shrink-0 border border-slate-200">
+                  {t.image_url ? (
+                    <img src={t.image_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs text-center p-2">No Image</div>
+                  )}
+                  
+                  <div className="absolute inset-0 bg-black/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200 cursor-pointer pointer-events-none">
+                    {uploadingId === t.id ? <Loader2 className="animate-spin" size={20} /> : <><Upload size={18} className="mb-1" /><span className="text-[10px]">Change</span></>}
+                  </div>
+                  
+                  <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleTeacherImage(e, t.id)} title="" />
+                </div>
+
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">নাম</label>
+                    <input value={t.name || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, name: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">পদবি (বাংলা)</label>
+                    <input value={t.role_bn || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, role_bn: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">Role (EN)</label>
+                    <input value={t.role_en || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, role_en: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-slate-500 mb-1 block">জেন্ডার</label>
+                      <select value={t.gender || "male"} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, gender: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none">
+                        <option value="male">পুরুষ</option>
+                        <option value="female">মহিলা</option>
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs font-bold text-slate-500 mb-1 block">স্ট্যাটাস</label>
+                      <select value={t.status || "Active"} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, status: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none">
+                        <option value="Active">অ্যাক্টিভ</option>
+                        <option value="Pending">পেন্ডিং</option>
+                        <option value="Inactive">ইনঅ্যাক্টিভ</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <button onClick={() => handleDeleteTeacher(t.id, t.image_url)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition bg-white rounded-full p-1.5 shadow-sm hover:shadow-md border border-slate-100 z-20">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

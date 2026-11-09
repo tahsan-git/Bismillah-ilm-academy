@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Content, Locale } from "@/lib/types";
-import { pick, t, lh } from "@/lib/i18n";
+import { pick, t } from "@/lib/i18n";
 import { Check } from "lucide-react";
 import { ScrollReveal } from "../ui/ScrollReveal";
 
@@ -42,7 +42,12 @@ export function Pricing({ content, locale }: { content: Content; locale: Locale 
                     </li>
                   ))}
                 </ul>
-                <Link href={lh(locale, plan.cta_href)} className="block w-full py-3 rounded-xl text-center text-sm font-bold transition-colors duration-300 border-2 border-[#4CAF50] text-[#4CAF50] bg-transparent group-hover:bg-white group-hover:text-[#4CAF50] group-hover:border-white mt-auto">
+                
+                {/* 🌟 এখানে সরাসরি /student/register লিংক দেওয়া হলো */}
+                <Link 
+                  href="/student/register" 
+                  className="block w-full py-3 rounded-xl text-center text-sm font-bold transition-colors duration-300 border-2 border-[#4CAF50] text-[#4CAF50] bg-transparent group-hover:bg-white group-hover:text-[#4CAF50] group-hover:border-white mt-auto"
+                >
                   {pick(plan, "cta_label", locale)}
                 </Link>
               </div>

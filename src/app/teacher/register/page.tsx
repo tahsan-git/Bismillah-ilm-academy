@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { registerTeacher } from "@/actions/registerTeacher";
+import { createClient } from "@/lib/supabase/client"; // 🌟 Supabase ক্লায়েন্ট
 import {
   User,
   Mail,
@@ -342,6 +341,7 @@ export default function TeacherRegister() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
   const fields = [
     ...commonFields,
@@ -361,37 +361,40 @@ export default function TeacherRegister() {
       const name = String(formData.get("name") || "");
       const email = String(formData.get("email") || "");
       const phone = String(formData.get("phone") || "");
-      const password = String(formData.get("password") || "");
+      // পাসওয়ার্ড আপাতত ডাটাবেসে সেভ করছি না, কারণ Auth আলাদা। 
+      // চাইলে application_data-তেও রাখা যেতে পারে। 
 
       const applicationData: Record<string, string> = {
         gender,
+        password: String(formData.get("password") || ""), // চাইলে রাখতে পারেন
       };
 
       formData.forEach((value, key) => {
-        if (
-          !["name", "email", "phone", "password"].includes(key)
-        ) {
+        if (!["name", "email", "phone", "password"].includes(key)) {
           applicationData[key] = String(value);
         }
       });
 
-      // registerTeacher action-এ applicationData গ্রহণ ও সংরক্ষণ
-      // করার ব্যবস্থা থাকতে হবে।
-      const payload = {
-        name,
-        email,
-        phone,
-        password,
-        applicationData,
-      };
+      // 🌟 ডাটাবেসে ডাটা সেভ (আপনার স্কিমা অনুযায়ী)
+      const { error: dbError } = await supabase.from("teachers").insert({
+        name_bn: name,
+        name_en: name, 
+        email: email,
+        phone: phone,
+        role_bn: gender === "male" ? "শিক্ষক" : "শিক্ষিকা",
+        role_en: "Teacher",
+        status: "pending", // 🌟 আবেদন সবসময় pending থাকবে
+        application_data: applicationData, 
+      });
 
-      const result = await registerTeacher(payload);
-
-      if (result.success) {
-        setSuccess(true);
-      } else {
-        setError(result.error || "রেজিস্ট্রেশনে সমস্যা হয়েছে।");
+      if (dbError) {
+        console.error("Database Error:", dbError);
+        setError("ডাটাবেসে সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+        return;
       }
+
+      setSuccess(true);
+
     } catch (err) {
       console.error(err);
       setError("দুঃখিত, রেজিস্ট্রেশন সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।");
@@ -443,8 +446,8 @@ export default function TeacherRegister() {
           </h1>
 
           <p className="mt-2 text-sm text-body">
-  বিসমিল্লাহ ইলম একাডেমিতে শিক্ষক হিসেবে যোগদানের আবেদন করুন।
-</p>
+            বিসমিল্লাহ ইলম একাডেমিতে শিক্ষক হিসেবে যোগদানের আবেদন করুন।
+          </p>
         </div>
 
         <form

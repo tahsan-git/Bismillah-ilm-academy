@@ -91,7 +91,7 @@ export function Footer() {
               ইমেইলঃ <a href="mailto:bismillahilmacademy@gmail.com" className="hover:text-white transition break-all">bismillahilmacademy@gmail.com</a>
             </li>
             <li>
-              হোয়াটসঅ্যাপঃ <a href="https://wa.me/8801760840006" target="_blank" rel="noreferrer" className="hover:text-white transition">+৮৮০ ১৮৭৪ ৯০১ ৯৩০</a>
+              হোয়াটসঅ্যাপঃ <a href="https://wa.me/8801760840006" target="_blank" rel="noreferrer" className="hover:text-white transition">+৮৮০ ১৭৬০ ৮৪০০০৬</a>
             </li>
           </ul>
         </div>

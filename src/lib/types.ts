@@ -46,6 +46,7 @@ export type TeamMember = {
   // নতুন প্রপার্টি:
   name?: string; 
   status?: string;
+  gender?: "male" | "female"; 
 };
 
 export type Testimonial = {

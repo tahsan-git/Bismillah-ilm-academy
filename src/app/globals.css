@@ -144,3 +144,35 @@
     transition: none !important;
   }
 }
+/* অনন্তকাল চলার জন্য মার্কি অ্যানিমেশন */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+/* CTA সেকশনের অ্যানিমেশন */
+@keyframes dropDown {
+  0% { opacity: 0; transform: translateY(-40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes floatUpSmall {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRightBtns {
+  0% { opacity: 0; transform: translateX(50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-drop-down { animation: dropDown 0.8s ease-out both; }
+.animate-float-up-small { animation: floatUpSmall 0.8s ease-out both; animation-delay: 0.2s; }
+.animate-slide-right-btns { animation: slideInRightBtns 0.8s ease-out both; animation-delay: 0.4s; }

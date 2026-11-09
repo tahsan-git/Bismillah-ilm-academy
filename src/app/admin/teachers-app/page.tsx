@@ -1,620 +1,192 @@
 "use client";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Check, Trash2, Loader2, Users, Eye, X } from "lucide-react";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Check,
-  Eye,
-  FileDown,
-  Loader2,
-  RefreshCw,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+function TeachersContent() {
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as "all" | "active" | "pending") || "pending"; 
 
-import {
-  getTeacherApplications,
-  approveTeacherApplication,
-  deleteTeacherApplication,
-} from "@/actions/adminTeacherApps";
-
-type TeacherApplication = {
-  id: string;
-  user_id: string | null;
-  name_bn: string | null;
-  name_en: string | null;
-  email: string | null;
-  phone: string | null;
-  role_bn: string | null;
-  role_en: string | null;
-  image_url: string | null;
-  status: string | null;
-  application_data: Record<string, unknown> | null;
-  created_at: string;
-};
-
-type FilterType = "All" | "Pending" | "Active" | "Cancelled";
-
-const statusLabels: Record<string, string> = {
-  Pending: "অপেক্ষমাণ",
-  Active: "অনুমোদিত",
-  Cancelled: "বাতিল",
-};
-
-function formatDate(date: string) {
-  if (!date) return "—";
-
-  return new Date(date).toLocaleString("bn-BD", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") {
-    return "—";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "হ্যাঁ" : "না";
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(formatValue).join(", ");
-  }
-
-  if (typeof value === "object") {
-    return JSON.stringify(value, null, 2);
-  }
-
-  return String(value);
-}
-
-export default function AdminTeacherApps() {
-  const [applications, setApplications] = useState<TeacherApplication[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionId, setActionId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>("All");
-  const [search, setSearch] = useState("");
-  const [selectedApplication, setSelectedApplication] =
-    useState<TeacherApplication | null>(null);
-  const [error, setError] = useState("");
+  const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+  
+  // 🌟 URL থেকে initial tab নিয়ে নেওয়া হলো
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "pending">(initialTab);
+  
+  const supabase = createClient();
 
-  const fetchApplications = useCallback(async () => {
+  const fetchTeachers = async () => {
     setLoading(true);
-    setError("");
-
-    const result = await getTeacherApplications();
-
-    if (result.success) {
-      setApplications(
-        (result.applications || []) as TeacherApplication[]
-      );
-    } else {
-      setError(result.error || "আবেদনগুলো লোড করা যায়নি।");
-    }
-
+    const { data } = await supabase.from("teachers").select("*").order("created_at", { ascending: false });
+    if (data) setTeachers(data);
     setLoading(false);
-  }, []);
+  };
 
   useEffect(() => {
-    fetchApplications();
-  }, [fetchApplications]);
+    fetchTeachers();
+  }, []);
 
-  const filteredApplications = useMemo(() => {
-    return applications.filter((application) => {
-      const matchesFilter =
-        filter === "All" || application.status === filter;
+  // 🌟 ডাটা ফিল্টার
+  const filteredTeachers = teachers.filter((t) => {
+    const status = String(t.status || "").toLowerCase();
+    if (activeTab === "active") return status === "active";
+    if (activeTab === "pending") return status === "pending";
+    return true;
+  });
 
-      const searchText = search.trim().toLowerCase();
+  const handleApprove = async (teacher: any) => {
+    try {
+      setLoading(true);
+      const { error: insertError } = await supabase.from("teachers_profile").insert({
+        name: teacher.name_bn || teacher.name || "Unknown",
+        email: teacher.email || "",
+        phone: teacher.phone || "",
+        image_url: teacher.image_url || null,
+        role_bn: teacher.role_bn || "শিক্ষক",
+        role_en: teacher.role_en || "Teacher",
+        gender: teacher.gender || "male",
+        status: "Active",
+        user_id: null
+      });
 
-      const matchesSearch =
-        !searchText ||
-        [
-          application.name_bn,
-          application.name_en,
-          application.email,
-          application.phone,
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLowerCase().includes(searchText)
-          );
-
-      return matchesFilter && matchesSearch;
-    });
-  }, [applications, filter, search]);
-
-  const counts = useMemo(
-    () => ({
-      All: applications.length,
-      Pending: applications.filter((item) => item.status === "Pending")
-        .length,
-      Active: applications.filter((item) => item.status === "Active")
-        .length,
-      Cancelled: applications.filter(
-        (item) => item.status === "Cancelled"
-      ).length,
-    }),
-    [applications]
-  );
-
-  const handleApprove = async (application: TeacherApplication) => {
-    const confirmed = window.confirm(
-      `আপনি কি ${application.name_bn || application.name_en || "এই আবেদন"}-কে Approve করতে চান?`
-    );
-
-    if (!confirmed) return;
-
-    setActionId(application.id);
-
-    const result = await approveTeacherApplication(application.id);
-
-    if (!result.success) {
-      window.alert(result.error || "Approve করা যায়নি।");
-    } else {
-      window.alert("আবেদনটি সফলভাবে Approve হয়েছে।");
-      await fetchApplications();
-    }
-
-    setActionId(null);
-  };
-
-  const handleDelete = async (application: TeacherApplication) => {
-    const name =
-      application.name_bn || application.name_en || "এই আবেদন";
-
-    const confirmed = window.confirm(
-      `আপনি কি "${name}"-এর আবেদন স্থায়ীভাবে Delete করতে চান?\n\nএতে আবেদন, Teacher Profile এবং সংশ্লিষ্ট Login Account—সব মুছে যাবে। এই কাজটি আর Undo করা যাবে না।`
-    );
-
-    if (!confirmed) return;
-
-    setActionId(application.id);
-
-    const result = await deleteTeacherApplication(application.id);
-
-    if (!result.success) {
-      window.alert(result.error || "Delete করা যায়নি।");
-    } else {
-      if (selectedApplication?.id === application.id) {
-        setSelectedApplication(null);
+      if (insertError) {
+        alert(`এরর: ${insertError.message}`);
+        setLoading(false);
+        return;
       }
 
-      window.alert("আবেদনটি স্থায়ীভাবে Delete করা হয়েছে।");
-      await fetchApplications();
+      await supabase.from("teachers").delete().eq("id", teacher.id);
+      fetchTeachers();
+    } catch (err: any) {
+      alert("সমস্যা: " + err.message);
+      setLoading(false);
     }
-
-    setActionId(null);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDelete = async (id: string) => {
+    if (confirm("আপনি কি এই আবেদনটি ডিলিট করতে চান?")) {
+      await supabase.from("teachers").delete().eq("id", id);
+      fetchTeachers();
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-
-          .application-print-area,
-          .application-print-area * {
-            visibility: visible !important;
-          }
-
-          .application-print-area {
-            position: absolute !important;
-            inset: 0 !important;
-            width: 100% !important;
-            padding: 24px !important;
-            background: white !important;
-            color: black !important;
-          }
-
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="max-w-[1000px] mx-auto relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">
-            শিক্ষক আবেদনসমূহ
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            সকল Pending, Approved এবং Cancelled আবেদন পরিচালনা করুন।
-          </p>
+          <h1 className="text-2xl font-bold text-ink">শিক্ষক ম্যানেজমেন্ট</h1>
+          <p className="text-body mt-1">সকল শিক্ষকের তালিকা এবং আবেদন।</p>
         </div>
-
-        <button
-          type="button"
-          onClick={fetchApplications}
-          disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-        >
-          <RefreshCw
-            size={16}
-            className={loading ? "animate-spin" : ""}
-          />
-          Refresh
-        </button>
-      </div>
-
-      {/* Status summary */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {(
-          [
-            ["All", "সর্বমোট আবেদন", "text-gray-900"],
-            ["Pending", "অপেক্ষমাণ", "text-amber-600"],
-            ["Active", "অনুমোদিত", "text-green-600"],
-            ["Cancelled", "বাতিল", "text-red-600"],
-          ] as const
-        ).map(([key, label, color]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setFilter(key)}
-            className={`rounded-xl border bg-white p-4 text-left transition ${
-              filter === key
-                ? "border-blue-500 ring-2 ring-blue-100"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <p className="text-sm text-gray-500">{label}</p>
-            <p className={`mt-2 text-2xl font-bold ${color}`}>
-              {counts[key]}
-            </p>
-          </button>
-        ))}
-      </div>
-
-      {/* Search and filter */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="নাম, Gmail অথবা ফোন নম্বর দিয়ে খুঁজুন..."
-            className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500"
-          />
+        <div className="bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-xl flex items-center gap-3">
+          <Users className="text-yellow-600" size={20} />
+          <div>
+            <p className="text-xs font-bold text-yellow-700">মোট</p>
+            <p className="text-xl font-extrabold text-yellow-800">{filteredTeachers.length} জন</p>
+          </div>
         </div>
-
-        <select
-          value={filter}
-          onChange={(event) =>
-            setFilter(event.target.value as FilterType)
-          }
-          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
-        >
-          <option value="All">সকল আবেদন</option>
-          <option value="Pending">অপেক্ষমাণ</option>
-          <option value="Active">অনুমোদিত</option>
-          <option value="Cancelled">বাতিল</option>
-        </select>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* Applications */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        {loading ? (
-          <div className="flex min-h-52 items-center justify-center gap-3 text-gray-500">
-            <Loader2 className="animate-spin" size={22} />
-            আবেদন লোড হচ্ছে...
-          </div>
-        ) : filteredApplications.length === 0 ? (
-          <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
-            <Search size={28} className="mb-3 text-gray-300" />
-            <p className="font-medium text-gray-700">
-              কোনো আবেদন পাওয়া যায়নি।
-            </p>
-            <p className="mt-1 text-sm text-gray-400">
-              অন্য Filter অথবা Search দিয়ে চেষ্টা করুন।
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
-              <thead className="border-b border-gray-200 bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-5 py-4 font-semibold">শিক্ষক</th>
-                  <th className="px-5 py-4 font-semibold">যোগাযোগ</th>
-                  <th className="px-5 py-4 font-semibold">আবেদনের তারিখ</th>
-                  <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 text-right font-semibold">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {filteredApplications.map((application) => {
-                  const status = application.status || "Pending";
-                  const isBusy = actionId === application.id;
-
-                  return (
-                    <tr
-                      key={application.id}
-                      className="transition hover:bg-gray-50"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          {application.image_url ? (
-                            <img
-                              src={application.image_url}
-                              alt=""
-                              className="h-10 w-10 rounded-full border border-gray-200 object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 font-bold text-blue-600">
-                              {(application.name_bn ||
-                                application.name_en ||
-                                "T")[0]}
-                            </div>
-                          )}
-
-                          <div>
-                            <p className="font-semibold text-gray-900">
-                              {application.name_bn ||
-                                application.name_en ||
-                                "নাম নেই"}
-                            </p>
-                            <p className="mt-0.5 text-xs text-gray-500">
-                              {application.role_bn || "শিক্ষক"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <p className="text-gray-700">
-                          {application.email || "—"}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          {application.phone || "—"}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4 text-gray-600">
-                        {formatDate(application.created_at)}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            status === "Active"
-                              ? "bg-green-50 text-green-700"
-                              : status === "Cancelled"
-                                ? "bg-red-50 text-red-700"
-                                : "bg-amber-50 text-amber-700"
-                          }`}
-                        >
-                          {statusLabels[status] || status}
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            title="আবেদনের বিস্তারিত"
-                            onClick={() =>
-                              setSelectedApplication(application)
-                            }
-                            className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:bg-gray-100"
-                          >
-                            <Eye size={16} />
-                          </button>
-
-                          {status !== "Active" && (
-                            <button
-                              type="button"
-                              title="Approve"
-                              disabled={isBusy}
-                              onClick={() => handleApprove(application)}
-                              className="rounded-lg border border-green-200 p-2 text-green-700 transition hover:bg-green-50 disabled:opacity-50"
-                            >
-                              {isBusy ? (
-                                <Loader2
-                                  size={16}
-                                  className="animate-spin"
-                                />
-                              ) : (
-                                <Check size={16} />
-                              )}
-                            </button>
-                          )}
-
-                          <button
-                            type="button"
-                            title="স্থায়ীভাবে Delete"
-                            disabled={isBusy}
-                            onClick={() => handleDelete(application)}
-                            className="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                          >
-                            {isBusy ? (
-                              <Loader2
-                                size={16}
-                                className="animate-spin"
-                              />
-                            ) : (
-                              <Trash2 size={16} />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* ট্যাব বাটন */}
+      <div className="flex gap-2 mb-6">
+        <button onClick={() => setActiveTab("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "all" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সব</button>
+        <button onClick={() => setActiveTab("active")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "active" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সক্রিয়</button>
+        <button onClick={() => setActiveTab("pending")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "pending" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>অপেক্ষমাণ</button>
       </div>
 
-      <p className="text-xs text-gray-400">
-        দেখানো হচ্ছে {filteredApplications.length}টি / মোট{" "}
-        {applications.length}টি আবেদন।
-      </p>
-
-      {/* Application details modal */}
-      {selectedApplication && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              setSelectedApplication(null);
-            }
-          }}
-        >
-          <div className="application-print-area max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div className="no-print sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
-              <div>
-                <h3 className="font-bold text-gray-900">
-                  সম্পূর্ণ আবেদন
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Teacher Application Details
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  <FileDown size={16} />
-                  PDF / Print
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedApplication(null)}
-                  className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-100"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 sm:p-8">
-              <div className="mb-7 border-b border-gray-200 pb-5 text-center">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Bismillah Ilm Academy
-                </h1>
-                <p className="mt-2 text-sm text-gray-500">
-                  Teacher Registration Application
-                </p>
-              </div>
-
-              <div className="mb-7 flex flex-col items-center gap-3 sm:flex-row">
-                {selectedApplication.image_url && (
-                  <img
-                    src={selectedApplication.image_url}
-                    alt=""
-                    className="h-20 w-20 rounded-full border object-cover"
-                  />
-                )}
-
-                <div className="text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {selectedApplication.name_bn ||
-                      selectedApplication.name_en ||
-                      "নাম নেই"}
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {selectedApplication.role_bn || "শিক্ষক"}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    আবেদন: {formatDate(selectedApplication.created_at)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-7 grid gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs text-gray-500">Email</p>
-                  <p className="mt-1 break-all font-medium text-gray-900">
-                    {selectedApplication.email || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-gray-500">Phone</p>
-                  <p className="mt-1 font-medium text-gray-900">
-                    {selectedApplication.phone || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-gray-500">বর্তমান Status</p>
-                  <p className="mt-1 font-medium text-gray-900">
-                    {statusLabels[selectedApplication.status || "Pending"] ||
-                      selectedApplication.status}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-gray-500">Application ID</p>
-                  <p className="mt-1 break-all font-medium text-gray-900">
-                    {selectedApplication.id}
-                  </p>
-                </div>
-              </div>
-
-              <h3 className="mb-4 border-b border-gray-200 pb-2 font-bold text-gray-900">
-                আবেদনের বিস্তারিত তথ্য
-              </h3>
-
-              {selectedApplication.application_data &&
-              Object.keys(selectedApplication.application_data).length >
-                0 ? (
-                <div className="space-y-3">
-                  {Object.entries(
-                    selectedApplication.application_data
-                  ).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="grid gap-1 border-b border-gray-100 pb-3 sm:grid-cols-[190px_1fr]"
-                    >
-                      <p className="break-words text-sm font-medium text-gray-500">
-                        {key}
-                      </p>
-
-                      <p className="whitespace-pre-wrap break-words text-sm text-gray-900">
-                        {formatValue(value)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">
-                  অতিরিক্ত কোনো তথ্য পাওয়া যায়নি।
-                </p>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-body">
+            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4">নাম</th>
+                <th className="px-6 py-4">ফোন ও ইমেইল</th>
+                <th className="px-6 py-4 text-right">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading && <tr><td colSpan={3} className="text-center py-8"><Loader2 className="animate-spin mx-auto text-[#4CAF50]" size={24} /></td></tr>}
+              
+              {!loading && filteredTeachers.length === 0 && (
+                <tr><td colSpan={3} className="text-center py-12 text-slate-400">কোনো ডাটা পাওয়া যায়নি!</td></tr>
               )}
 
-              <div className="mt-10 border-t border-gray-200 pt-4 text-center text-xs text-gray-400">
-                Bismillah Ilm Academy — Teacher Application
+              {!loading && filteredTeachers.map((t) => (
+                <tr key={t.id} className="hover:bg-slate-50 transition">
+                  <td className="px-6 py-4 font-bold text-ink">{t.name_bn || t.name}</td>
+                  <td className="px-6 py-4">
+                    <div>{t.phone}</div>
+                    <div className="text-xs text-slate-400">{t.email}</div>
+                  </td>
+                  <td className="px-6 py-4 flex justify-end gap-2">
+                    <button onClick={() => setSelectedTeacher(t)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition">
+                      <Eye size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(t.id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* View Modal */}
+      {selectedTeacher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h2 className="text-xl font-bold text-ink">আবেদনের বিস্তারিত</h2>
+              <button onClick={() => setSelectedTeacher(null)} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-xs text-slate-500">নাম</p><p className="font-bold">{selectedTeacher.name_bn || selectedTeacher.name}</p></div>
+                <div><p className="text-xs text-slate-500">ফোন</p><p className="font-bold">{selectedTeacher.phone}</p></div>
+                <div><p className="text-xs text-slate-500">ইমেইল</p><p className="font-bold">{selectedTeacher.email}</p></div>
+                <div><p className="text-xs text-slate-500">জেন্ডার</p><p className="font-bold capitalize">{selectedTeacher.gender}</p></div>
               </div>
+
+              <hr className="border-slate-100" />
+
+              <div>
+                <h3 className="font-bold text-[#4CAF50] mb-4">ফর্মের অন্যান্য তথ্য</h3>
+                <div className="space-y-4">
+                  {Object.entries(selectedTeacher.application_data || {}).map(([key, value]) => {
+                    const label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                    return (
+                      <div key={key} className="bg-slate-50 p-3 rounded-lg">
+                        <p className="text-xs text-slate-500 mb-1">{label}</p>
+                        <p className="text-sm text-ink font-medium">{String(value) || "-"}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {String(selectedTeacher.status).toLowerCase() === "pending" && (
+                <button onClick={() => handleApprove(selectedTeacher)} className="w-full bg-[#4CAF50] hover:bg-[#388E3C] text-white py-3 rounded-lg font-bold transition flex justify-center items-center gap-2">
+                  <Check size={20} /> Approve করুন
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminTeachersApp() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">লোড হচ্ছে...</div>}>
+      <TeachersContent />
+    </Suspense>
   );
 }

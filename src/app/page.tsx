@@ -6,6 +6,7 @@ import { About } from "@/components/user/About";
 import { Features } from "@/components/user/Features";
 import { Management } from "@/components/user/Management";
 import { Teachers } from "@/components/user/Teachers";
+import { FemaleTeachers } from "@/components/user/FemaleTeachers"; 
 import { Testimonials } from "@/components/user/Testimonials";
 import { CTA } from "@/components/user/CTA";
 import { FAQ } from "@/components/user/FAQ";
@@ -69,19 +70,12 @@ export default async function Home() {
       { id: "2", name_bn: "পপুলার প্লান", name_en: "Popular Plan", price: 2000, features_bn: ["সপ্তাহে ৬ দিন ক্লাস", "ফিমেল টিচার"], features_en: ["6 days/week", "Female Teacher"], is_featured: true, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
       { id: "3", name_bn: "এডভান্স প্লান", name_en: "Advanced Plan", price: 4000, features_bn: ["হিফজ করানো হবে", "ফিমেল টিচার"], features_en: ["Hifz", "Female Teacher"], is_featured: false, cta_label_bn: "ভর্তি হোন", cta_label_en: "Enroll", cta_href: "/trial-class" },
     ],
-    cta: { 
-      eyebrow_bn: "যুক্ত হোন", eyebrow_en: "Join", 
-      heading_bn: "কুরআনের পথে যাত্রা শুরু হোক", heading_en: "Start your journey", 
-      primary_label_bn: "ট্রায়াল ক্লাস", primary_label_en: "Trial", primary_href: "/trial-class", 
-      secondary_label_bn: "শিক্ষক হোন", secondary_label_en: "Teacher", secondary_href: "/teacher-application" 
-    },
     footer: [],
     brand: { name_bn: "বিসমিল্লাহ ইলম একাডেমি", name_en: "Bismillah Ilm Academy", tagline_bn: "কুরআনের সাথে জান্নাতের পথে", tagline_en: "Path to Jannah", logo_url: null },
     contact: { phone: "+8801700000000", phone_display: "+৮৮০ ১৭০০ ০০০ ০০০", email: "info@bismillah.com", whatsapp: "" },
     socials: [{ icon: "facebook", href: "#" }, { icon: "youtube", href: "#" }],
     footerCopy: { text_bn: "স্বত্ব @ ২০২৪ বিসমিল্লাহ", text_en: "Copyright @ 2024" },
     
-    // 🌟 ফ্যালব্যাক ব্যাকগ্রাউন্ড ইমেজ
     backgrounds: {
       hero: "https://images.unsplash.com/photo-1584285404123-2f3030ba1e9a?auto=format&fit=crop&q=80&w=1600",
       about: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&q=80&w=1600",
@@ -92,7 +86,7 @@ export default async function Home() {
     }
   };
 
-  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (নিরাপদ উপায়ে)
+  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (CTA বাদে)
   const content: any = {
     ...fallback,
     nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
@@ -107,12 +101,10 @@ export default async function Home() {
     
     hero: dbContent?.hero?.heading_bn ? { ...fallback.hero, ...dbContent.hero } : fallback.hero,
     about: dbContent?.about?.heading_bn ? { ...fallback.about, ...dbContent.about } : fallback.about,
-    cta: dbContent?.cta?.heading_bn ? { ...fallback.cta, ...dbContent.cta } : fallback.cta,
     brand: dbContent?.brand?.name_bn ? { ...fallback.brand, ...dbContent.brand } : fallback.brand,
     contact: dbContent?.contact?.phone ? { ...fallback.contact, ...dbContent.contact } : fallback.contact,
     footerCopy: dbContent?.footerCopy?.text_bn ? { ...fallback.footerCopy, ...dbContent.footerCopy } : fallback.footerCopy,
     
-    // ব্যাকগ্রাউন্ড ম্যাপ (ডাটাবেস থেকে আসলে সেটা নেবে, না আসলে ফ্যালব্যাক)
     backgrounds: {
       ...fallback.backgrounds,
       ...(dbContent?.backgrounds || {})
@@ -129,8 +121,15 @@ export default async function Home() {
         <Features content={content} locale={locale} />
         <Management content={content} locale={locale} />
         <Teachers content={content} locale={locale} />
+        
+        {/* আপনার তৈরি করা ফিমেল টিচার্স সেকশন */}
+        <FemaleTeachers content={content} locale={locale} />
+        
         <Testimonials content={content} locale={locale} />
-        <CTA content={content} locale={locale} />
+        
+        {/* CTA ডাটাবেস ছাড়া স্ট্যাটিক */}
+        <CTA /> 
+        
         <FAQ content={content} locale={locale} />
         <Pricing content={content} locale={locale} />
       </main>
