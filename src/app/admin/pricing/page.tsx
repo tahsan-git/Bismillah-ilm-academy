@@ -101,7 +101,7 @@ export default function AdminPricing() {
     const newPlans = [...plans];
     const field = lang === "bn" ? "features_bn" : "features_en";
     const currentFeatures = newPlans[planIndex][field] || [];
-    newPlans[planIndex][field] = currentFeatures.filter((_, i) => i !== featureIndex);
+    newPlans[planIndex][field] = currentFeatures.filter((_:any, i:number) => i !== featureIndex);
     setPlans(newPlans);
   };
 
