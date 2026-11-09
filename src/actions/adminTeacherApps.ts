@@ -35,7 +35,7 @@ async function getAdminContext() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: any[]) {  // 🌟 এখানে any[] টাইপ যোগ করা হলো
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
