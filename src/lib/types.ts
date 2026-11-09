@@ -125,4 +125,5 @@ export type Content = {
   contact: ContactSettings;
   socials: SocialLink[];
   footerCopy: FooterCopy;
+  backgrounds: Record<string, string>;
 };
