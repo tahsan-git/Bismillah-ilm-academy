@@ -62,7 +62,7 @@ export default async function AllTeachersPage() {
                   )}
                 </div>
                 <h3 className="text-lg font-bold text-ink mb-1">{m.name_bn || m.name}</h3>
-                <p className="text-sm text-[#4CAF50] font-medium">{m.role_bn || m.role}</p>
+                <p className="text-sm text-[#4CAF50] font-medium">{m.role_bn || m.role_en}</p>
               </div>
             ))}
 
@@ -76,7 +76,7 @@ export default async function AllTeachersPage() {
         </div>
       </main>
 
-      <Footer content={content} locale={locale} />
+      <Footer/>
     </>
   );
 }
