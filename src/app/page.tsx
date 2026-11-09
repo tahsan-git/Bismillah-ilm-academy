@@ -125,7 +125,7 @@ export default async function Home() {
         <FAQ content={content} locale={locale} />
         <Pricing content={content} locale={locale} />
       </main>
-      <Footer content={content} locale={locale} />
+      <Footer/>
     </>
   );
 }
