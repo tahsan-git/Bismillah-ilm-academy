@@ -25,7 +25,7 @@ export default async function Home() {
     console.error("Database fetch failed:", error);
   }
 
-  // 🌟 ফ্যালব্যাক ডাটা (about ছাড়া)
+  // 🌟 ফ্যালব্যাক ডাটা
   const fallback: any = {
     nav: [
       { id: "1", label_bn: "হোম", label_en: "Home", href: "/", is_cta: false },
@@ -78,7 +78,7 @@ export default async function Home() {
     }
   };
 
-  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া (about বাদ দিয়ে)
+  // 🌟 ডাটাবেসের ডাটা এবং ফলব্যাক ডাটা মিলিয়ে নেওয়া
   const content: any = {
     ...fallback,
     nav: dbContent?.nav?.length ? dbContent.nav : fallback.nav,
@@ -109,19 +109,17 @@ export default async function Home() {
         <Hero content={content} locale={locale} />
         <Stats content={content} locale={locale} />
         
-        {/* 🌟 About এখন স্ট্যাটিক, তাই ডাটা পাস না করলেও চলবে (তবে props ফাঁকা রাখলে এরর দিতে পারে, তাই props পাঠানো হলো) */}
-        <About content={content} locale={locale} />
+        {/* 🌟 About এখন স্ট্যাটিক, তাই কোনো props নেই */}
+        <About />
         
         <Features content={content} locale={locale} />
         <Management content={content} locale={locale} />
         <Teachers content={content} locale={locale} />
         
-        {/* আপনার তৈরি করা ফিমেল টিচার্স সেকশন */}
         <FemaleTeachers content={content} locale={locale} />
         
         <Testimonials content={content} locale={locale} />
         
-        {/* CTA ডাটাবেস ছাড়া স্ট্যাটিক */}
         <CTA /> 
         
         <FAQ content={content} locale={locale} />
