@@ -79,6 +79,9 @@ export default function AdminTeachers() {
         gender: "male",
         status: "Active",
         image_url: "",
+        rating: 5, // 👈 ডিফল্ট রেটিং ৫
+        description_bn: "", // 👈 নতুন ফিল্ড
+        description_en: "", // 👈 নতুন ফিল্ড
         created_at: new Date().toISOString(),
       },
       ...teachers,
@@ -149,6 +152,11 @@ export default function AdminTeachers() {
           gender: t.gender,
           status: t.status,
           image_url: t.image_url,
+          
+          // 👇 নতুন ফিল্ডগুলো পেলোডে যুক্ত করা হলো
+          rating: t.rating ? Number(t.rating) : 5,
+          description_bn: t.description_bn || "",
+          description_en: t.description_en || "",
         };
 
         if (!t.id.startsWith("new-")) {
@@ -282,6 +290,45 @@ export default function AdminTeachers() {
                       </select>
                     </div>
                   </div>
+
+                  {/* 👇 নতুন যোগ করা রেটিং ফিল্ড */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">রেটিং (১ - ৫)</label>
+                    <input 
+                      type="number" 
+                      step="0.1" 
+                      min="1" 
+                      max="5" 
+                      value={t.rating || 5} 
+                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, rating: parseFloat(e.target.value)} : item))} 
+                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" 
+                    />
+                  </div>
+
+                  {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (বাংলা) */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">ডেসক্রিপশন (বাংলা)</label>
+                    <textarea 
+                      rows={3}
+                      value={t.description_bn || ""} 
+                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_bn: e.target.value} : item))} 
+                      placeholder="শিক্ষকের সম্পর্কে বিস্তারিত লিখুন..."
+                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
+                    />
+                  </div>
+
+                  {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (ইংরেজি) */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">Description (English)</label>
+                    <textarea 
+                      rows={3}
+                      value={t.description_en || ""} 
+                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_en: e.target.value} : item))} 
+                      placeholder="Write about the teacher..."
+                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
+                    />
+                  </div>
+
                 </div>
 
                 <button onClick={() => handleDeleteTeacher(t.id, t.image_url)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition bg-white rounded-full p-1.5 shadow-sm hover:shadow-md border border-slate-100 z-20">

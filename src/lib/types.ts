@@ -47,6 +47,10 @@ export type TeamMember = {
   name?: string; 
   status?: string;
   gender?: "male" | "female"; 
+  rating?: number | null;
+  description?: string | null;
+  description_bn?: string | null;
+  description_en?: string | null;
 };
 
 export type Testimonial = {

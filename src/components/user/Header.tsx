@@ -34,7 +34,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
             <img
               src="/images/logo.png"
               alt="Bismillah Ilm Academy"
-              className="h-24 w-auto object-contain md:h-32"
+              className="h-20 w-auto object-contain md:h-32"
               onError={() => setLogoError(true)}
             />
           ) : (
@@ -60,7 +60,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
 
         {/* Desktop Actions */}
         <div className="hidden items-center gap-5 lg:flex">
-          {/* Login Button (Redirects to /login page) */}
+          {/* Login Button */}
           <Link
             href="/login"
             className="text-sm font-bold text-white transition hover:text-[#4CAF50]"
@@ -92,15 +92,26 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          onClick={() => setOpen(!open)}
-          className="text-white lg:hidden"
-        >
-          {open ? <X size={25} /> : <Menu size={25} />}
-        </button>
+        {/* 👇 Mobile View (Login Button + Hamburger Menu) */}
+        <div className="flex items-center gap-3 lg:hidden">
+          {/* Mobile Login Button */}
+          <Link
+            href="/login"
+            className="rounded-md border border-white/30 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/10"
+          >
+            লগইন
+          </Link>
+
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            onClick={() => setOpen(!open)}
+            className="text-white p-1"
+          >
+            {open ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation */}
@@ -120,18 +131,12 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
             </Link>
           ))}
 
-          <Link
-            href="/login"
-            onClick={() => setOpen(false)}
-            className="text-sm font-bold text-white transition hover:text-[#4CAF50] border-t border-[#F2A007]/20 pt-4"
-          >
-            লগইন
-          </Link>
+          {/* মোবাইল মেনুর ভেতর থেকে লগইন সরিয়ে দেওয়া হয়েছে কারণ এটি এখন হেডারে আছে */}
 
           <Link
             href={locale === "bn" ? "/en" : "/"}
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-sm font-bold text-white"
+            className="flex items-center gap-2 text-sm font-bold text-white border-t border-[#F2A007]/20 pt-4"
           >
             <Globe size={16} />
             {locale === "bn" ? "English" : "বাংলা"}

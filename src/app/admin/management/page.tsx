@@ -19,7 +19,7 @@ export default function AdminManagement() {
     const fetchData = async () => {
       const [membersData, bgData, teachersData] = await Promise.all([
         supabase.from("management").select("*").order("sort_order"),
-        supabase.from("section_backgrounds").select("*").eq("section_key", "management").single(),
+        supabase.from("section_backgrounds").select("*").eq("section_key", "management").maybeSingle(), // single() এর বদলে maybeSingle() দেওয়া নিরাপদ
         supabase.from("teachers_profile").select("*").eq("status", "Active")
       ]);
       
@@ -58,12 +58,11 @@ export default function AdminManagement() {
     }
   };
 
-    // ব্যাকগ্রাউন্ড ডিলিট (ডাটাবেস এবং স্টোরেজ দুই জায়গা থেকেই মুছে ফেলবে)
+  // ব্যাকগ্রাউন্ড ডিলিট 
   const handleDeleteBg = async () => {
     if (!confirm("আপনি কি নিশ্চিত ব্যাকগ্রাউন্ডটি ডিলিট করতে চান?")) return;
     
     try {
-      // ১. স্টোরেজ (Bucket) থেকে ছবি ডিলিট করা
       if (bgImage && bgImage.includes("site-images")) {
         const oldPath = bgImage.split("/").pop();
         if (oldPath) {
@@ -72,10 +71,8 @@ export default function AdminManagement() {
         }
       }
       
-      // ২. স্টেট থেকে মুছে ফেলা (UI আপডেট)
       setBgImage("");
 
-      // ৩. ডাটাবেসের section_backgrounds টেবিল থেকে লিংকটি মুছে ফেলা
       const { error: dbError } = await supabase
         .from("section_backgrounds")
         .delete()
@@ -124,11 +121,13 @@ export default function AdminManagement() {
     setMembers([
       ...members,
       {
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID(), // নতুন আইডি
         name_bn: "",
         name_en: "",
         role_bn: "",
         role_en: "",
+        description_bn: "", // 👈 নতুন ফিল্ড
+        description_en: "", // 👈 নতুন ফিল্ড
         image_url: "",
         sort_order: members.length + 1,
       }
@@ -144,10 +143,12 @@ export default function AdminManagement() {
       ...members,
       {
         id: crypto.randomUUID(),
-        name_bn: teacher.name_bn,
-        name_en: teacher.name_en,
+        name_bn: teacher.name_bn || teacher.name, // শিক্ষকের নাম টিচার টেবিল থেকে নেওয়া
+        name_en: teacher.name_en || teacher.name,
         role_bn: teacher.role_bn || "শিক্ষক",
         role_en: teacher.role_en || "Teacher",
+        description_bn: teacher.description_bn || "", // শিক্ষকের ডেসক্রিপশন থাকলে নিয়ে নিবে
+        description_en: teacher.description_en || "",
         image_url: teacher.image_url || "",
         sort_order: members.length + 1,
       }
@@ -161,7 +162,8 @@ export default function AdminManagement() {
     
     const member = members[index];
     
-    if (member.id && !member.id.includes("-")) {
+    // যদি ডাটাবেসে আগে থেকেই সেভ করা থাকে (UUID ফরম্যাটে)
+    if (member.id && !member.id.includes("-new")) {
       await supabase.from("management").delete().eq("id", member.id);
     }
 
@@ -186,6 +188,8 @@ export default function AdminManagement() {
         name_en: m.name_en,
         role_bn: m.role_bn,
         role_en: m.role_en,
+        description_bn: m.description_bn || "", // 👈 ডাটাবেসে পাঠানো হচ্ছে
+        description_en: m.description_en || "", // 👈 ডাটাবেসে পাঠানো হচ্ছে
         image_url: m.image_url,
         sort_order: m.sort_order
       });
@@ -245,7 +249,7 @@ export default function AdminManagement() {
             >
               <option value="">শিক্ষক নির্বাচন করুন</option>
               {teachers.map(t => (
-                <option key={t.id} value={t.id}>{t.name_bn} ({t.role_bn})</option>
+                <option key={t.id} value={t.id}>{t.name || t.name_bn} ({t.role_bn})</option>
               ))}
             </select>
             <button 
@@ -268,7 +272,7 @@ export default function AdminManagement() {
           </div>
           
           {members.map((m, i) => (
-            <div key={i} className="bg-white p-4 md:p-5 rounded-2xl border border-slate-100 flex gap-6 items-start shadow-sm relative group">
+            <div key={i} className="bg-white p-4 md:p-5 rounded-2xl border border-slate-100 flex flex-col md:flex-row gap-6 items-start shadow-sm relative group">
               
               {/* মেম্বারের ছবি */}
               <div className="w-24 h-28 rounded-xl overflow-hidden bg-slate-100 relative shrink-0 border border-slate-200">
@@ -299,7 +303,7 @@ export default function AdminManagement() {
               </div>
 
               {/* টেক্সট ফিল্ডসমূহ */}
-              <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div>
                   <label className="text-xs font-bold text-slate-500 mb-1 block">নাম (বাংলা)</label>
                   <input value={m.name_bn || ""} onChange={(e) => { const n = [...members]; n[i].name_bn = e.target.value; setMembers(n); }} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
@@ -315,6 +319,30 @@ export default function AdminManagement() {
                 <div>
                   <label className="text-xs font-bold text-slate-500 mb-1 block">Role (EN)</label>
                   <input value={m.role_en || ""} onChange={(e) => { const n = [...members]; n[i].role_en = e.target.value; setMembers(n); }} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
+                </div>
+
+                {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (বাংলা) */}
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 mb-1 block">ডেসক্রিপশন (বাংলা)</label>
+                  <textarea 
+                    rows={3}
+                    value={m.description_bn || ""} 
+                    onChange={(e) => { const n = [...members]; n[i].description_bn = e.target.value; setMembers(n); }} 
+                    placeholder="সদস্যের সম্পর্কে বিস্তারিত লিখুন..."
+                    className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
+                  />
+                </div>
+
+                {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (ইংরেজি) */}
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 mb-1 block">Description (English)</label>
+                  <textarea 
+                    rows={3}
+                    value={m.description_en || ""} 
+                    onChange={(e) => { const n = [...members]; n[i].description_en = e.target.value; setMembers(n); }} 
+                    placeholder="Write about the member..."
+                    className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
+                  />
                 </div>
               </div>
 
