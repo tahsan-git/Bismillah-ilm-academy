@@ -14,7 +14,7 @@ export function Teachers({ content, locale }: { content: Content; locale: Locale
   if (maleTeachers.length === 0) return null;
 
   // 👇 রেটিং স্টার রেন্ডার করার ফাংশন (হাফ স্টার সহ)
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number | null | undefined) => {
     const currentRating = rating || 5; // ডাটাবেসে রেটিং না থাকলে ডিফল্ট ৫
 
     return (
