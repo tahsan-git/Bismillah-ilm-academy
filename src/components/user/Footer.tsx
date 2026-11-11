@@ -18,7 +18,7 @@ export function Footer() {
 
   return (
     // আপনার থিমের সাথে মিল রেখে bg-[#1a5f63] বা bg-ink ব্যবহার করতে পারেন
-    <footer className="bg-[#1a5f63] text-white pt-16 pb-8 font-sans">
+    <footer className="bg-[#002A41] text-white pt-16 pb-8 font-sans">
       <div className="max-w-[1240px] mx-auto px-5 grid md:grid-cols-12 gap-10">
         
         {/* Column 1: Logo & Description */}
@@ -28,7 +28,7 @@ export function Footer() {
               <img 
                 src="/images/logo.png" 
                 alt="Bismillah Ilm Academy Logo" 
-                className="h-12 w-auto object-contain" 
+                className="h-50 w-auto object-contain" 
                 onError={() => setLogoError(true)} 
               />
             ) : (

@@ -8,13 +8,32 @@ import { ScrollReveal } from "../ui/ScrollReveal";
 export function FAQ({ content, locale }: { content: Content; locale: Locale }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
+  const bgImage = content.backgrounds?.["faq"];
+
   return (
-    <section id="faq" className="bg-soft2 py-24 overflow-hidden">
-      <div className="max-w-[800px] mx-auto px-5">
+    <section 
+      id="faq" 
+      className="relative bg-soft2 py-24 overflow-hidden"
+      style={
+        bgImage
+          ? {
+              backgroundImage: `url(${bgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : undefined
+      }
+    >
+      <div className="relative z-10 max-w-[800px] mx-auto px-5">
         <ScrollReveal direction="up">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold text-brand mb-3">{t(locale, "আপনার প্রশ্ন, আমাদের উত্তর", "Your questions, our answers")}</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-ink">{t(locale, "গুরুত্বপূর্ণ প্রশ্নসমূহ", "Frequently Asked Questions")}</h2>
+            <p className="text-sm font-bold text-brand mb-3">
+              {t(locale, "আপনার প্রশ্ন, আমাদের উত্তর", "Your questions, our answers")}
+            </p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-ink">
+              {t(locale, "গুরুত্বপূর্ণ প্রশ্নসমূহ", "Frequently Asked Questions")}
+            </h2>
           </div>
         </ScrollReveal>
         
@@ -30,7 +49,8 @@ export function FAQ({ content, locale }: { content: Content; locale: Locale }) {
                   {openId === faq.id ? <ChevronUp className="text-brand" /> : <ChevronDown className="text-slate-400" />}
                 </button>
                 {openId === faq.id && (
-                  <div className="px-6 pb-5 text-body leading-relaxed border-t border-slate-50 pt-4">
+                  /* 👇 এখানে whitespace-pre-line যোগ করা হয়েছে */
+                  <div className="px-6 pb-5 text-body leading-relaxed border-t border-slate-50 pt-4 whitespace-pre-line">
                     {pick(faq, "answer", locale)}
                   </div>
                 )}

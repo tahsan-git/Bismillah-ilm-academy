@@ -28,8 +28,7 @@ export function FemaleTeachers({ content, locale }: { content: Content; locale: 
         </div>
 
         <div className="w-full overflow-hidden relative">
-          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-r from-[#FDF5E6] to-transparent z-20 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-[#FDF5E6] to-transparent z-20 pointer-events-none"></div>
+          {/* 👇 শ্যাডোর ডিভগুলো এখান থেকে সরিয়ে দেওয়া হয়েছে */}
 
           <div className="animate-marquee gap-6 py-4" style={{ animationDirection: 'reverse' }}>
             {[...femaleTeachers, ...femaleTeachers].map((m, index) => (

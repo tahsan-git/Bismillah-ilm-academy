@@ -5,11 +5,33 @@ import { Check } from "lucide-react";
 import { ScrollReveal } from "../ui/ScrollReveal";
 
 export function Pricing({ content, locale }: { content: Content; locale: Locale }) {
+  // 👇 ডাটাবেস থেকে 'pricing' সেকশনের ব্যাকগ্রাউন্ড ইমেজ নিচ্ছি
+  const bgImage = content.backgrounds?.["pricing"];
+
   return (
-    <section id="pricing" className="bg-white py-24 overflow-hidden relative">
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
-           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0C50 27.614 72.386 50 100 50C72.386 50 50 72.386 50 100C50 72.386 27.614 50 0 50C27.614 50 50 27.614 50 0Z' fill='%234CAF50'/%3E%3C/svg%3E")`, backgroundSize: '150px' }}>
-      </div>
+    <section 
+      id="pricing" 
+      className="relative bg-white py-24 overflow-hidden"
+      style={
+        bgImage
+          ? {
+              backgroundImage: `url(${bgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : undefined
+      }
+    >
+      {/* 👇 ইমেজ না থাকলে আগের ডিফল্ট প্যাটার্নটি দেখাবে, আর ইমেজ থাকলে ওভারলে হিসেবে কাজ করবে */}
+      {!bgImage && (
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0C50 27.614 72.386 50 100 50C72.386 50 50 72.386 50 100C50 72.386 27.614 50 0 50C27.614 50 50 27.614 50 0Z' fill='%234CAF50'/%3E%3C/svg%3E")`, backgroundSize: '150px' }}>
+        </div>
+      )}
+
+      {/* 👇 ব্যাকগ্রাউন্ড ইমেজের ওপর একটি হালকা সাদা ওভারলে (ঐচ্ছিক) */}
+      {bgImage && <div className="absolute inset-0 bg-white/70 z-0 pointer-events-none" />}
 
       <div className="max-w-[1100px] mx-auto px-5 relative z-10">
         <ScrollReveal direction="up">
@@ -43,7 +65,6 @@ export function Pricing({ content, locale }: { content: Content; locale: Locale 
                   ))}
                 </ul>
                 
-                {/* 🌟 এখানে সরাসরি /student/register লিংক দেওয়া হলো */}
                 <Link 
                   href="/student/register" 
                   className="block w-full py-3 rounded-xl text-center text-sm font-bold transition-colors duration-300 border-2 border-[#4CAF50] text-[#4CAF50] bg-transparent group-hover:bg-white group-hover:text-[#4CAF50] group-hover:border-white mt-auto"

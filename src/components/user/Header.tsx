@@ -26,7 +26,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
   };
 
   return (
-    <header className="relative z-50 border-b border-[#F2A007]/20 bg-[#FDF5E6] shadow-sm">
+    <header className="relative z-50 border-b border-[#F2A007]/20 bg-[#002A41] shadow-sm">
       <div className="mx-auto flex h-20 max-w-[1240px] items-center justify-between px-5">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -34,11 +34,11 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
             <img
               src="/images/logo.png"
               alt="Bismillah Ilm Academy"
-              className="h-10 w-auto object-contain md:h-12"
+              className="h-24 w-auto object-contain md:h-32"
               onError={() => setLogoError(true)}
             />
           ) : (
-            <span className="text-xl font-bold text-[#1E293B]">
+            <span className="text-xl font-bold text-white">
               {pick(content.brand, "name", locale)}
             </span>
           )}
@@ -51,7 +51,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
               key={l.id}
               href={l.href}
               onClick={(e) => handleScroll(e, l.href)}
-              className="text-sm font-bold text-[#1E293B] transition hover:text-[#4CAF50]"
+              className="text-sm font-bold text-white transition hover:text-[#4CAF50]"
             >
               {pick(l, "label", locale)}
             </Link>
@@ -63,19 +63,17 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           {/* Login Button (Redirects to /login page) */}
           <Link
             href="/login"
-            className="text-sm font-bold text-[#1E293B] transition hover:text-[#4CAF50]"
+            className="text-sm font-bold text-white transition hover:text-[#4CAF50]"
           >
             লগইন
           </Link>
 
           {/* Language Switcher */}
-          {/* 🌟 ল্যাঙ্গুয়েজ বাটন (আপাতত শুধু ডিজাইনের জন্য, ক্লিক করলে হোম পেজে থাকবে) */}
           <Link
             href="/"
-            className="flex items-center gap-1 text-sm font-bold text-slate-400 cursor-not-allowed border-l border-slate-300 pl-4 lg:pl-6"
+            className="flex items-center gap-1 text-sm font-bold text-white/50 cursor-not-allowed border-l border-white/30 pl-4 lg:pl-6"
             onClick={(e) => {
               e.preventDefault();
-              // ক্লিক করলে পেজ রিলোড হয়ে হোম পেজে থাকবে
               window.location.href = "/";
             }}
           >
@@ -86,7 +84,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           {/* CTA Button */}
           {cta && (
             <Link
-              href="/trial-class" // আপনার ডাটা অনুযায়ী লিংক দিন
+              href="/trial-class"
               className="whitespace-nowrap rounded-lg bg-[#4CAF50] px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#388E3C]"
             >
               {pick(cta, "label", locale)}
@@ -99,7 +97,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           type="button"
           aria-label="Toggle menu"
           onClick={() => setOpen(!open)}
-          className="text-[#1E293B] lg:hidden"
+          className="text-white lg:hidden"
         >
           {open ? <X size={25} /> : <Menu size={25} />}
         </button>
@@ -107,7 +105,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
 
       {/* Mobile Navigation */}
       {open && (
-        <div className="flex flex-col gap-4 border-t border-[#F2A007]/20 bg-[#FDF5E6] px-5 py-5 shadow-lg lg:hidden">
+        <div className="flex flex-col gap-4 border-t border-[#F2A007]/20 bg-[#002A41] px-5 py-5 shadow-lg lg:hidden">
           {rest.map((l) => (
             <Link
               key={l.id}
@@ -116,7 +114,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
                 handleScroll(e, l.href);
                 setOpen(false);
               }}
-              className="text-sm font-bold text-[#1E293B] transition hover:text-[#4CAF50]"
+              className="text-sm font-bold text-white transition hover:text-[#4CAF50]"
             >
               {pick(l, "label", locale)}
             </Link>
@@ -125,7 +123,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           <Link
             href="/login"
             onClick={() => setOpen(false)}
-            className="text-sm font-bold text-[#1E293B] transition hover:text-[#4CAF50] border-t border-[#F2A007]/20 pt-4"
+            className="text-sm font-bold text-white transition hover:text-[#4CAF50] border-t border-[#F2A007]/20 pt-4"
           >
             লগইন
           </Link>
@@ -133,7 +131,7 @@ export function Header({ content, locale }: { content: Content; locale: Locale }
           <Link
             href={locale === "bn" ? "/en" : "/"}
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-sm font-bold text-[#1E293B]"
+            className="flex items-center gap-2 text-sm font-bold text-white"
           >
             <Globe size={16} />
             {locale === "bn" ? "English" : "বাংলা"}

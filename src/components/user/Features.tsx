@@ -42,7 +42,7 @@ export function Features({ content, locale }: { content: Content; locale: Locale
       className="relative py-24 bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: content.backgrounds?.features 
-          ? `linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)), url('${content.backgrounds.features}')` 
+          ? `linear-gradient(rgba(255,255,255,0.50), rgba(255,255,255,0.50)), url('${content.backgrounds.features}')` 
           : 'none'
       }}
     >
