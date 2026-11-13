@@ -90,6 +90,29 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             <LogOut size={20} /> লগআউট
           </button>
         </div>
+                <div className="p-4 border-t border-white/10 bg-[#002A41] shrink-0">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 font-medium transition"
+          >
+            <LogOut size={20} /> লগআউট
+          </button>
+          
+          {/* 🌟 Developed By Text with Link */}
+          <div className="mt-3 text-center">
+            <p className="text-[10px] text-slate-400">
+              Developed by{" "}
+              <a 
+                href="https://facebook.com/TahsanBillah" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="font-bold text-[#4CAF50] hover:underline"
+              >
+                Tahsan
+              </a>
+            </p>
+          </div>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">

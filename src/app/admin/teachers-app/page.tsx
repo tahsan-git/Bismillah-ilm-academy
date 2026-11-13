@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/client";
 import { Check, Trash2, Loader2, Users, Eye, X } from "lucide-react";
 
@@ -13,8 +12,8 @@ function TeachersContent() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+  const [message, setMessage] = useState("");
   
-  // 🌟 URL থেকে initial tab নিয়ে নেওয়া হলো
   const [activeTab, setActiveTab] = useState<"all" | "active" | "pending">(initialTab);
   
   const supabase = createClient();
@@ -30,7 +29,7 @@ function TeachersContent() {
     fetchTeachers();
   }, []);
 
-  // 🌟 ডাটা ফিল্টার
+  // 🌟 Filter
   const filteredTeachers = teachers.filter((t) => {
     const status = String(t.status || "").toLowerCase();
     if (activeTab === "active") return status === "active";
@@ -38,30 +37,46 @@ function TeachersContent() {
     return true;
   });
 
+  // 🌟 Approve Logic (Fixed)
   const handleApprove = async (id: string) => {
-  alert("Approve বাটনে ক্লিক হয়েছে! ID: " + id); // 🌟 এই লাইনটি যোগ করুন
-  
-  if (!confirm("আপনি কি এই আবেদনটি Approve করতে চান?")) return;
-  setBusyId(id);
-  setMessage("");
+    if (!confirm("আপনি কি এই আবেদনটি Approve করতে চান?")) return;
+    setBusyId(id);
+    setMessage("");
 
-  try {
-    const result = await approveTeacherApplication(id);
+    try {
+      // Teacher table theke data niye teachers_profile e move koro
+      const teacherToApprove = teachers.find(t => t.id === id);
+      if (!teacherToApprove) throw new Error("Teacher not found");
 
-    if (!result.success) {
-      setMessage(result.error || "Approve করা যায়নি।");
-      alert("Error: " + result.error); // 🌟 এই লাইনটি যোগ করুন
-    } else {
+      const { error: profileError } = await supabase.from("teachers_profile").insert({
+        name: teacherToApprove.name_bn || teacherToApprove.name,
+        email: teacherToApprove.email,
+        phone: teacherToApprove.phone,
+        gender: teacherToApprove.gender || "male",
+        status: "Active",
+        role_bn: "শিক্ষক",
+        role_en: "Teacher",
+        description_bn: teacherToApprove.application_data?.bio || "",
+        description_en: "",
+        image_url: teacherToApprove.application_data?.image_url || "",
+        password: teacherToApprove.password || "teacher123",
+      });
+
+      if (profileError) throw profileError;
+
+      // Teacher table theke delete koro (ba status update)
+      await supabase.from("teachers").delete().eq("id", id);
+
       setMessage("আবেদন সফলভাবে Approve হয়েছে।");
-      await fetchApplications();
+      await fetchTeachers();
+    } catch (err) {
+      console.error(err);
+      setMessage(err instanceof Error ? err.message : "Approve করা যায়নি।");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Exception: " + (err instanceof Error ? err.message : "Unknown"));
-  }
 
-  setBusyId(null);
-};
+    setBusyId(null);
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("আপনি কি এই আবেদনটি ডিলিট করতে চান?")) {
       await supabase.from("teachers").delete().eq("id", id);
@@ -85,7 +100,13 @@ function TeachersContent() {
         </div>
       </div>
 
-      {/* ট্যাব বাটন */}
+      {message && (
+        <div className={`p-3 rounded-lg text-sm font-bold mb-4 ${message.includes("সফলভাবে") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+          {message}
+        </div>
+      )}
+
+      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button onClick={() => setActiveTab("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "all" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সব</button>
         <button onClick={() => setActiveTab("active")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "active" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সক্রিয়</button>
@@ -106,7 +127,7 @@ function TeachersContent() {
               {loading && <tr><td colSpan={3} className="text-center py-8"><Loader2 className="animate-spin mx-auto text-[#4CAF50]" size={24} /></td></tr>}
               
               {!loading && filteredTeachers.length === 0 && (
-                <tr><td colSpan={3} className="text-center py-12 text-slate-400">কোনো ডাটা পাওয়া যায়নি!</td></tr>
+                <tr><td colSpan={3} className="text-center py-12 text-slate-400">কোনো ডাটা পাওয়া যায়নি!</td></tr>
               )}
 
               {!loading && filteredTeachers.map((t) => (
@@ -168,8 +189,8 @@ function TeachersContent() {
               </div>
 
               {String(selectedTeacher.status).toLowerCase() === "pending" && (
-                <button onClick={() => handleApprove(selectedTeacher)} className="w-full bg-[#4CAF50] hover:bg-[#388E3C] text-white py-3 rounded-lg font-bold transition flex justify-center items-center gap-2">
-                  <Check size={20} /> Approve করুন
+                <button onClick={() => handleApprove(selectedTeacher.id)} disabled={busyId === selectedTeacher.id} className="w-full bg-[#4CAF50] hover:bg-[#388E3C] text-white py-3 rounded-lg font-bold transition flex justify-center items-center gap-2 disabled:opacity-50">
+                  {busyId === selectedTeacher.id ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />} Approve করুন
                 </button>
               )}
             </div>
