@@ -14,6 +14,8 @@ import {
   GraduationCap,
   MapPin,
   BookOpen,
+  Eye, // 👈 Eye যোগ করা হয়েছে
+  EyeOff, // 👈 EyeOff যোগ করা হয়েছে
 } from "lucide-react";
 
 type Field = {
@@ -341,6 +343,7 @@ export default function TeacherRegister() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false); // 👈 পাসওয়ার্ড দেখার স্টেট
   const supabase = createClient();
 
   const fields = [
@@ -552,11 +555,20 @@ export default function TeacherRegister() {
                 <input
                   required
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"} // 👈 টাইপ পরিবর্তন হবে
                   minLength={6}
                   placeholder="কমপক্ষে ৬ অক্ষর"
-                  className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:border-[#4CAF50]"
+                  className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-12 text-sm outline-none focus:border-[#4CAF50]" // 👈 pr-12 যোগ করা হলো
                 />
+                {/* 👇 Eye Icon বাটন */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
           </section>

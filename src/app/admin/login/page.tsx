@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Lock, Mail, Loader2 } from "lucide-react";
+import { Lock, Mail, Loader2, Eye, EyeOff } from "lucide-react"; // 👈 Eye, EyeOff ইমপোর্ট করা হলো
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // 👈 পাসওয়ার্ড দেখার স্টেট
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -65,13 +66,23 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // 👈 টাইপ পরিবর্তন হবে
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:border-[#4CAF50] outline-none"
+                className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-slate-200 focus:border-[#4CAF50] outline-none" // 👈 pr-12 যোগ করা হলো
                 placeholder="••••••••"
               />
+              
+              {/* 👇 Eye Icon বাটন */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
           <button

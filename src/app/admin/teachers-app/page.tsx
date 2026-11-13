@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+
 import { createClient } from "@/lib/supabase/client";
 import { Check, Trash2, Loader2, Users, Eye, X } from "lucide-react";
 
@@ -10,6 +11,7 @@ function TeachersContent() {
 
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
   
   // 🌟 URL থেকে initial tab নিয়ে নেওয়া হলো
@@ -36,35 +38,30 @@ function TeachersContent() {
     return true;
   });
 
-  const handleApprove = async (teacher: any) => {
-    try {
-      setLoading(true);
-      const { error: insertError } = await supabase.from("teachers_profile").insert({
-        name: teacher.name_bn || teacher.name || "Unknown",
-        email: teacher.email || "",
-        phone: teacher.phone || "",
-        image_url: teacher.image_url || null,
-        role_bn: teacher.role_bn || "শিক্ষক",
-        role_en: teacher.role_en || "Teacher",
-        gender: teacher.gender || "male",
-        status: "Active",
-        user_id: null
-      });
+  const handleApprove = async (id: string) => {
+  alert("Approve বাটনে ক্লিক হয়েছে! ID: " + id); // 🌟 এই লাইনটি যোগ করুন
+  
+  if (!confirm("আপনি কি এই আবেদনটি Approve করতে চান?")) return;
+  setBusyId(id);
+  setMessage("");
 
-      if (insertError) {
-        alert(`এরর: ${insertError.message}`);
-        setLoading(false);
-        return;
-      }
+  try {
+    const result = await approveTeacherApplication(id);
 
-      await supabase.from("teachers").delete().eq("id", teacher.id);
-      fetchTeachers();
-    } catch (err: any) {
-      alert("সমস্যা: " + err.message);
-      setLoading(false);
+    if (!result.success) {
+      setMessage(result.error || "Approve করা যায়নি।");
+      alert("Error: " + result.error); // 🌟 এই লাইনটি যোগ করুন
+    } else {
+      setMessage("আবেদন সফলভাবে Approve হয়েছে।");
+      await fetchApplications();
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Exception: " + (err instanceof Error ? err.message : "Unknown"));
+  }
 
+  setBusyId(null);
+};
   const handleDelete = async (id: string) => {
     if (confirm("আপনি কি এই আবেদনটি ডিলিট করতে চান?")) {
       await supabase.from("teachers").delete().eq("id", id);

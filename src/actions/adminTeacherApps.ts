@@ -35,7 +35,7 @@ async function getAdminContext() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet: any[]) {  // 🌟 এখানে any[] টাইপ যোগ করা হলো
+      setAll(cookiesToSet: any[]) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
@@ -91,7 +91,7 @@ export async function getTeacherApplications() {
       error:
         error instanceof Error
           ? error.message
-          : "আবেদনগুলো লোড করা যায়নি।",
+          : "আবেদনগুলো লোড করা যায়নি।",
       applications: [],
     };
   }
@@ -101,6 +101,7 @@ export async function approveTeacherApplication(id: string) {
   try {
     const { admin } = await getAdminContext();
 
+    // ১. teachers টেবিল থেকে আবেদন ফেচ
     const { data: application, error: fetchError } = await admin
       .from("teachers")
       .select("*")
@@ -108,51 +109,78 @@ export async function approveTeacherApplication(id: string) {
       .single();
 
     if (fetchError || !application) {
-      throw new Error("আবেদনটি পাওয়া যায়নি।");
+      throw new Error("আবেদনটি পাওয়া যায়নি।");
     }
 
-    if (!application.user_id) {
-      throw new Error("এই আবেদনের সঙ্গে কোনো Auth account যুক্ত নেই।");
+    // ২. ইমেইল বা ফোন চেক
+    let teacherEmail = application.email;
+    
+    if (!teacherEmail) {
+      if (!application.phone) {
+        throw new Error("এই আবেদনে ইমেইল বা ফোন নম্বর নেই। লগইন করা যাবে না।");
+      }
+      const cleanPhone = String(application.phone).replace(/\D/g, "");
+      teacherEmail = `${cleanPhone}@teacher.bismillah.com`;
     }
 
+    // ৩. Auth-এ ইউজার তৈরি (যদি আগে থেকে user_id না থাকে)
+    let authUserId = application.user_id;
+    
+    if (!authUserId) {
+      const defaultPassword = `teacher_${application.phone || '123456'}`;
+      
+      const { data: authData, error: authError } = await admin.auth.admin.createUser({
+        email: teacherEmail,
+        password: defaultPassword,
+        email_confirm: true,
+      });
+
+      // যদি ইউজার আগে থেকেই থাকে (same email)
+      if (authError && authError.message.includes("already registered")) {
+        // ইমেইল দিয়ে Auth ইউজার খুঁজে বের করা
+        const { data: existingUsers } = await admin.auth.admin.listUsers();
+        const existingUser = existingUsers?.users?.find(
+          (u) => u.email?.toLowerCase() === teacherEmail.toLowerCase()
+        );
+        
+        if (existingUser) {
+          authUserId = existingUser.id;
+        } else {
+          throw new Error("ইমেইল দিয়ে Auth ইউজার তৈরি বা খুঁজে পাওয়া যায়নি।");
+        }
+      } else if (authError) {
+        throw new Error(`Auth error: ${authError.message}`);
+      } else {
+        authUserId = authData.user.id;
+      }
+    }
+
+    // ৪. teachers_profile-এ সেভ বা আপডেট
     const profileData = {
-      user_id: application.user_id,
-      name:
-        application.name_bn ||
-        application.name_en ||
-        "Teacher",
-      email: application.email || null,
+      user_id: authUserId,
+      name: application.name_bn || application.name_en || "Teacher",
+      email: teacherEmail,
       phone: application.phone || null,
       image_url: application.image_url || null,
       status: "Active",
       role_bn: application.role_bn || "শিক্ষক",
       role_en: application.role_en || "Teacher",
+      gender: application.gender || "male",
     };
 
-    // Profile না থাকলে তৈরি হবে, থাকলে Update হবে।
     const { error: profileError } = await admin
       .from("teachers_profile")
-      .upsert(profileData, {
-        onConflict: "user_id",
-      });
+      .upsert(profileData, { onConflict: "user_id" });
 
     if (profileError) throw profileError;
 
-    // মূল আবেদন Active করা।
+    // ৫. teachers টেবিলের status আপডেট
     const { error: updateError } = await admin
       .from("teachers")
-      .update({ status: "Active" })
+      .update({ status: "Active", user_id: authUserId })
       .eq("id", id);
 
-    if (updateError) {
-      // Status update ব্যর্থ হলে তৈরি হওয়া profile সরানোর চেষ্টা।
-      await admin
-        .from("teachers_profile")
-        .delete()
-        .eq("user_id", application.user_id);
-
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
     return { success: true };
   } catch (error) {
@@ -163,7 +191,7 @@ export async function approveTeacherApplication(id: string) {
       error:
         error instanceof Error
           ? error.message
-          : "আবেদন Approve করা যায়নি।",
+          : "আবেদন Approve করা যায়নি।",
     };
   }
 }
@@ -174,15 +202,15 @@ export async function deleteTeacherApplication(id: string) {
 
     const { data: application, error: fetchError } = await admin
       .from("teachers")
-      .select("id, user_id")
+      .select("id, user_id, email, phone")
       .eq("id", id)
       .single();
 
     if (fetchError || !application) {
-      throw new Error("আবেদনটি পাওয়া যায়নি।");
+      throw new Error("আবেদনটি পাওয়া যায়নি।");
     }
 
-    // প্রথমে সংশ্লিষ্ট Profile Delete।
+    // ১. Profile Delete
     if (application.user_id) {
       const { error: profileError } = await admin
         .from("teachers_profile")
@@ -192,7 +220,7 @@ export async function deleteTeacherApplication(id: string) {
       if (profileError) throw profileError;
     }
 
-    // এরপর মূল Application Delete।
+    // ২. teachers টেবিল থেকে Delete
     const { error: applicationError } = await admin
       .from("teachers")
       .delete()
@@ -200,7 +228,7 @@ export async function deleteTeacherApplication(id: string) {
 
     if (applicationError) throw applicationError;
 
-    // সবশেষে Supabase Auth account Delete।
+    // ৩. Auth account Delete
     if (application.user_id) {
       const { error: authError } = await admin.auth.admin.deleteUser(
         application.user_id
@@ -208,11 +236,10 @@ export async function deleteTeacherApplication(id: string) {
 
       if (authError) {
         console.error("Auth account deletion error:", authError);
-
         return {
           success: false,
           error:
-            "আবেদন ও Profile মুছে গেছে, কিন্তু Auth account মুছতে সমস্যা হয়েছে।",
+            "আবেদন ও Profile মুছে গেছে, কিন্তু Auth account মুছতে সমস্যা হয়েছে।",
         };
       }
     }
@@ -226,7 +253,7 @@ export async function deleteTeacherApplication(id: string) {
       error:
         error instanceof Error
           ? error.message
-          : "আবেদন Delete করা যায়নি।",
+          : "আবেদন Delete করা যায়নি।",
     };
   }
 }

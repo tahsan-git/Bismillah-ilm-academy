@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: (list: { name: string; value: string; options: any }[]) =>
+        setAll: (list: any[]) =>
           list.forEach((c) =>
             response.cookies.set(c.name, c.value, c.options)
           ),
@@ -18,27 +18,52 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  // Protect /admin (except /admin/login)
+  // 🌟 Admin Protection
   if (path.startsWith("/admin") && !path.startsWith("/admin/login")) {
     if (!user) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
+    const allowedEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+    if (!user.email || !allowedEmails.includes(user.email.toLowerCase())) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
-  // If already logged in, /admin/login redirects to /admin
-  if (path.startsWith("/admin/login") && user) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+  // 🌟 Admin login page e login kora thakle dashboard e pathao
+  if (path === "/admin/login" && user) {
+    const allowedEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+    if (user.email && allowedEmails.includes(user.email.toLowerCase())) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+  }
+
+  // 🌟 Teacher Protection
+  if (path.startsWith("/teacher") && !path.startsWith("/teacher/login") && !path.startsWith("/teacher/register")) {
+    const teacherId = request.cookies.get("teacher_id")?.value;
+    if (!teacherId) {
+      return NextResponse.redirect(new URL("/teacher/login", request.url));
+    }
+  }
+
+  // 🌟 Student Protection
+  if (path.startsWith("/student") && !path.startsWith("/student/login") && !path.startsWith("/student/register")) {
+    const studentId = request.cookies.get("student_id")?.value;
+    if (!studentId) {
+      return NextResponse.redirect(new URL("/student/login", request.url));
+    }
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/teacher/:path*",
+    "/student/:path*",
+  ],
 };

@@ -16,7 +16,6 @@ function StudentsContent() {
   const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  // 🌟 URL থেকে initial tab নিয়ে নেওয়া হলো
   const [activeTab, setActiveTab] = useState<"all" | "active" | "pending">(initialTab);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +32,6 @@ function StudentsContent() {
     fetchStudents();
   }, []);
 
-  // 🌟 ডাটা ফিল্টার
   const filteredStudents = students.filter((s) => {
     const status = String(s.status || "").toLowerCase();
     if (activeTab === "active") return status === "active";
@@ -46,28 +44,20 @@ function StudentsContent() {
     if (!file) return;
 
     setUploading(true);
-
     try {
-      // 🌟 ১. আগের ছবিটি থাকলে সেটি Storage থেকে ডিলিট করা
       if (imageUrl) {
-        // URL থেকে ফাইলের নাম বের করা (যেমন: student-12345.png)
         const oldFileName = imageUrl.split('/').pop();
-        if (oldFileName) {
-          await supabase.storage.from('site-images').remove([oldFileName]);
-        }
+        if (oldFileName) await supabase.storage.from('site-images').remove([oldFileName]);
       }
 
-      // 🌟 ২. নতুন ছবি আপলোড করা
       const fileExt = file.name.split('.').pop();
       const fileName = `student-${Math.random()}.${fileExt}`;
 
       const { error } = await supabase.storage.from('site-images').upload(fileName, file);
       if (error) throw error;
 
-      // 🌟 ৩. নতুন ছবির পাবলিক URL নেওয়া
       const { data } = supabase.storage.from('site-images').getPublicUrl(fileName);
       setImageUrl(data.publicUrl);
-
     } catch (error) {
       alert("ছবি আপলোড বা ডিলিট করতে সমস্যা হয়েছে!");
       console.error(error);
@@ -96,18 +86,12 @@ function StudentsContent() {
   const handleDelete = async (id: string, imageUrlToDelete: string | null) => {
     if (confirm("আপনি কি এই শিক্ষার্থীকে ডিলিট করতে চান?")) {
       try {
-        // 🌟 ১. ছবি থাকলে আগে Storage থেকে ডিলিট করা
         if (imageUrlToDelete) {
           const fileName = imageUrlToDelete.split('/').pop();
-          if (fileName) {
-            await supabase.storage.from('site-images').remove([fileName]);
-          }
+          if (fileName) await supabase.storage.from('site-images').remove([fileName]);
         }
-
-        // 🌟 ২. এরপর ডাটাবেস থেকে ডিলিট করা
         await supabase.from("students").delete().eq("id", id);
-
-        fetchStudents(); // ডাটা রিফ্রেশ
+        fetchStudents();
       } catch (error) {
         console.error("Delete error:", error);
         alert("ডিলিট করতে সমস্যা হয়েছে!");
@@ -123,7 +107,6 @@ function StudentsContent() {
 
   return (
     <div className="max-w-[1000px] mx-auto relative">
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-ink">শিক্ষার্থী ম্যানেজমেন্ট</h1>
@@ -138,7 +121,6 @@ function StudentsContent() {
         </div>
       </div>
 
-      {/* ট্যাব বাটন */}
       <div className="flex gap-2 mb-6">
         <button onClick={() => setActiveTab("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "all" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সব</button>
         <button onClick={() => setActiveTab("active")} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${activeTab === "active" ? "bg-[#4CAF50] text-white" : "bg-white text-slate-600 border border-slate-200"}`}>সক্রিয়</button>
@@ -173,10 +155,7 @@ function StudentsContent() {
                     <button onClick={() => openViewModal(s)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition">
                       <Eye size={16} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(s.id, s.image_url)} // 🌟 এখানে s.image_url পাঠানো হলো
-                      className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
-                    >
+                    <button onClick={() => handleDelete(s.id, s.image_url)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition">
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -187,11 +166,9 @@ function StudentsContent() {
         </div>
       </div>
 
-      {/* View Modal (ছবি আপলোড সহ) */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h2 className="text-xl font-bold text-ink">শিক্ষার্থীর তথ্য</h2>
               <button onClick={() => setSelectedStudent(null)} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200">
@@ -200,8 +177,6 @@ function StudentsContent() {
             </div>
 
             <div id="printable-area" className="p-6 space-y-4">
-
-              {/* 🌟 ছবি আপলোড সেকশন */}
               <div className="flex flex-col items-center justify-center mb-6 print:hidden">
                 <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-[#4CAF50] overflow-hidden flex items-center justify-center mb-2">
                   {imageUrl ? <img src={imageUrl} alt="Student" className="w-full h-full object-cover" /> : <ImageIcon className="text-slate-300" size={40} />}
@@ -220,7 +195,6 @@ function StudentsContent() {
 
               <hr className="border-slate-100" />
 
-              {/* Application Data (বাকি সব ডাটা) */}
               <div>
                 <h3 className="font-bold text-[#4CAF50] mb-4">ফর্মের অন্যান্য তথ্য</h3>
                 <div className="space-y-4">
@@ -236,7 +210,6 @@ function StudentsContent() {
                 </div>
               </div>
 
-              {/* প্ল্যান ও অ্যাকশন বাটন */}
               <div className="pt-4 border-t border-slate-100 print:hidden">
                 <label className="block text-sm font-bold text-ink mb-2">প্ল্যান নির্বাচন করুন</label>
                 <select value={planValue} onChange={(e) => setPlanValue(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-[#4CAF50] outline-none bg-white mb-4">
@@ -260,7 +233,6 @@ function StudentsContent() {
         </div>
       )}
 
-      {/* PDF প্রিন্টের জন্য গ্লোবাল CSS */}
       <style jsx global>{`
         @media print {
           body * { visibility: hidden; }
@@ -269,7 +241,6 @@ function StudentsContent() {
           .print\\:hidden { display: none !important; }
         }
       `}</style>
-
     </div>
   );
 }

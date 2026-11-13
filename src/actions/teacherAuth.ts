@@ -1,4 +1,3 @@
-
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
@@ -41,12 +40,15 @@ export async function findTeacherAuthEmail(identity: string) {
     }
 
     let query = supabaseAdmin
-      .from("teachers")
+      .from("teachers_profile")
       .select("phone, email, status");
 
+    // 🌟 স্মার্ট চেক: ইমেইল নাকি ফোন?
     if (value.includes("@")) {
+      // ইমেইল দিয়ে খুঁজছি
       query = query.eq("email", value.toLowerCase());
     } else {
+      // ফোন দিয়ে খুঁজছি
       const phone = normalizeBDPhone(value);
 
       if (!phone) {
@@ -61,16 +63,17 @@ export async function findTeacherAuthEmail(identity: string) {
 
     const { data: teacher, error } = await query.maybeSingle();
 
-    if (error || !teacher?.phone) {
+    if (error || !teacher?.email) {
       return {
         success: false,
-        error: "এই Gmail বা ফোন নম্বর দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
+        error: "এই Gmail বা ফোন নম্বর দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
       };
     }
 
+    // 🌟 ডাটাবেসে থাকা আসল ইমেইলটি রিটার্ন করছি
     return {
       success: true,
-      authEmail: `${teacher.phone}@gmail.com`,
+      authEmail: teacher.email,
     };
   } catch (error) {
     console.error("Teacher lookup error:", error);

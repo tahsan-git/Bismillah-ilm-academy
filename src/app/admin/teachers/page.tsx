@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Upload, Trash2, Plus } from "lucide-react";
+import { Loader2, Upload, Trash2, Plus, Eye, EyeOff, Phone, Mail, Lock } from "lucide-react";
 
 export default function AdminTeachers() {
   const [loading, setLoading] = useState(true);
@@ -10,10 +10,13 @@ export default function AdminTeachers() {
   
   const [teachers, setTeachers] = useState<any[]>([]);
   
-  // 🌟 দুইটি আলাদা ব্যাকগ্রাউন্ড স্টেট
+  // 🌟 Background states
   const [bgMale, setBgMale] = useState("");
   const [bgFemale, setBgFemale] = useState("");
   const [uploadingBg, setUploadingBg] = useState<string | null>(null);
+
+  // 🌟 Password visibility state
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   
   const supabase = createClient();
 
@@ -34,7 +37,11 @@ export default function AdminTeachers() {
     fetchData();
   }, [supabase]);
 
-  // ব্যাকগ্রাউন্ড আপলোড (মেইল বা ফিমেইল)
+  const togglePassword = (id: string) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Background Upload
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "male" | "female") => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -68,7 +75,7 @@ export default function AdminTeachers() {
     }
   };
 
-  // নতুন শিক্ষক যোগ করা
+  // New Teacher Add
   const handleAddTeacher = () => {
     setTeachers([
       {
@@ -79,16 +86,20 @@ export default function AdminTeachers() {
         gender: "male",
         status: "Active",
         image_url: "",
-        rating: 5, // 👈 ডিফল্ট রেটিং ৫
-        description_bn: "", // 👈 নতুন ফিল্ড
-        description_en: "", // 👈 নতুন ফিল্ড
+        rating: 5,
+        salary: 0,
+        phone: "",
+        email: "",
+        password: "teacher123", // Default password
+        description_bn: "",
+        description_en: "",
         created_at: new Date().toISOString(),
       },
       ...teachers,
     ]);
   };
 
-  // শিক্ষকের ছবি আপলোড
+  // Teacher Image Upload
   const handleTeacherImage = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -118,7 +129,7 @@ export default function AdminTeachers() {
     }
   };
 
-  // শিক্ষক ডিলিট করা
+  // Delete Teacher
   const handleDeleteTeacher = async (id: string, imageUrl: string | null) => {
     if (!confirm("আপনি কি নিশ্চিত এই শিক্ষককে ডিলিট করতে চান?")) return;
     
@@ -134,13 +145,18 @@ export default function AdminTeachers() {
     setTeachers((prev) => prev.filter(t => t.id !== id));
   };
 
-  // সব সেভ করা
+  // Save All
   const handleSave = async () => {
     setSaving(true);
     try {
       for (const t of teachers) {
         if (!t.name) {
           alert("অনুগ্রহ করে ফাঁকা কার্ডের নাম পূরণ করুন।");
+          setSaving(false);
+          return;
+        }
+        if (!t.email) {
+          alert("অনুগ্রহ করে শিক্ষকের ইমেইল পূরণ করুন।");
           setSaving(false);
           return;
         }
@@ -152,9 +168,11 @@ export default function AdminTeachers() {
           gender: t.gender,
           status: t.status,
           image_url: t.image_url,
-          
-          // 👇 নতুন ফিল্ডগুলো পেলোডে যুক্ত করা হলো
           rating: t.rating ? Number(t.rating) : 5,
+          salary: t.salary ? Number(t.salary) : 0,
+          phone: t.phone || "",
+          email: t.email || "",
+          password: t.password || "teacher123", // Default if empty
           description_bn: t.description_bn || "",
           description_en: t.description_en || "",
         };
@@ -172,7 +190,7 @@ export default function AdminTeachers() {
           throw error;
         }
       }
-      alert("সফলভাবে সেভ হয়েছে!");
+      alert("সফলভাবে সেভ হয়েছে!");
       window.location.reload();
     } catch (error: any) {
       console.error(error);
@@ -194,7 +212,7 @@ export default function AdminTeachers() {
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="space-y-6">
-          {/* 🌟 পুরুষ শিক্ষকদের ব্যাকগ্রাউন্ড */}
+          {/* Backgrounds */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h2 className="text-lg font-bold mb-4">শিক্ষক সেকশনের ব্যাকগ্রাউন্ড</h2>
             {bgMale ? (
@@ -213,7 +231,6 @@ export default function AdminTeachers() {
             )}
           </div>
 
-          {/* 🌟 মহিলা শিক্ষকদের ব্যাকগ্রাউন্ড */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h2 className="text-lg font-bold mb-4">শিক্ষিকা সেকশনের ব্যাকগ্রাউন্ড</h2>
             {bgFemale ? (
@@ -245,6 +262,7 @@ export default function AdminTeachers() {
             {teachers.map((t) => (
               <div key={t.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row gap-6 items-start shadow-sm relative group">
                 
+                {/* Image */}
                 <div className="w-24 h-28 rounded-xl overflow-hidden bg-slate-100 relative shrink-0 border border-slate-200">
                   {t.image_url ? (
                     <img src={t.image_url} className="w-full h-full object-cover" />
@@ -260,10 +278,13 @@ export default function AdminTeachers() {
                 </div>
 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  {/* Name */}
                   <div className="md:col-span-2">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">নাম</label>
                     <input value={t.name || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, name: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
                   </div>
+
+                  {/* Role */}
                   <div>
                     <label className="text-xs font-bold text-slate-500 mb-1 block">পদবি (বাংলা)</label>
                     <input value={t.role_bn || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, role_bn: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
@@ -272,7 +293,39 @@ export default function AdminTeachers() {
                     <label className="text-xs font-bold text-slate-500 mb-1 block">Role (EN)</label>
                     <input value={t.role_en || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, role_en: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
                   </div>
-                  
+
+                  {/* Phone & Email */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block flex items-center gap-1"><Phone size={12} /> মোবাইল নম্বর</label>
+                    <input type="tel" value={t.phone || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, phone: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" placeholder="017XXXXXXXX" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block flex items-center gap-1"><Mail size={12} /> জিমেইল</label>
+                    <input type="email" value={t.email || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, email: e.target.value} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" placeholder="example@gmail.com" />
+                  </div>
+
+                  {/* Password (with Eye Toggle) */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block flex items-center gap-1"><Lock size={12} /> পাসওয়ার্ড</label>
+                    <div className="relative">
+                      <input 
+                        type={visiblePasswords[t.id] ? "text" : "password"} 
+                        value={t.password || ""} 
+                        onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, password: e.target.value} : item))} 
+                        className="w-full border border-slate-200 p-2 pr-10 rounded-lg text-sm focus:border-[#4CAF50] outline-none" 
+                        placeholder="teacher123"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => togglePassword(t.id)}
+                        className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {visiblePasswords[t.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Gender & Status */}
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <label className="text-xs font-bold text-slate-500 mb-1 block">জেন্ডার</label>
@@ -291,42 +344,24 @@ export default function AdminTeachers() {
                     </div>
                   </div>
 
-                  {/* 👇 নতুন যোগ করা রেটিং ফিল্ড */}
+                  {/* Rating & Salary */}
                   <div>
                     <label className="text-xs font-bold text-slate-500 mb-1 block">রেটিং (১ - ৫)</label>
-                    <input 
-                      type="number" 
-                      step="0.1" 
-                      min="1" 
-                      max="5" 
-                      value={t.rating || 5} 
-                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, rating: parseFloat(e.target.value)} : item))} 
-                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" 
-                    />
+                    <input type="number" step="0.1" min="1" max="5" value={t.rating || 5} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, rating: parseFloat(e.target.value)} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">মাসিক বেতন (৳)</label>
+                    <input type="number" min="0" value={t.salary || 0} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, salary: parseFloat(e.target.value)} : item))} className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none" />
                   </div>
 
-                  {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (বাংলা) */}
+                  {/* Descriptions */}
                   <div className="md:col-span-2">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">ডেসক্রিপশন (বাংলা)</label>
-                    <textarea 
-                      rows={3}
-                      value={t.description_bn || ""} 
-                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_bn: e.target.value} : item))} 
-                      placeholder="শিক্ষকের সম্পর্কে বিস্তারিত লিখুন..."
-                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
-                    />
+                    <textarea rows={3} value={t.description_bn || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_bn: e.target.value} : item))} placeholder="শিক্ষকের সম্পর্কে বিস্তারিত লিখুন..." className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" />
                   </div>
-
-                  {/* 👇 নতুন যোগ করা ডেসক্রিপশন ফিল্ড (ইংরেজি) */}
                   <div className="md:col-span-2">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">Description (English)</label>
-                    <textarea 
-                      rows={3}
-                      value={t.description_en || ""} 
-                      onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_en: e.target.value} : item))} 
-                      placeholder="Write about the teacher..."
-                      className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" 
-                    />
+                    <textarea rows={3} value={t.description_en || ""} onChange={(e) => setTeachers(prev => prev.map(item => item.id === t.id ? {...item, description_en: e.target.value} : item))} placeholder="Write about the teacher..." className="w-full border border-slate-200 p-2 rounded-lg text-sm focus:border-[#4CAF50] outline-none resize-none" />
                   </div>
 
                 </div>
