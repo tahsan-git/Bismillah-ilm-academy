@@ -2,14 +2,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  CheckSquare, 
-  BookOpen, 
-  FileText, 
-  MessageSquare, 
-  Library, 
+import {
+  LayoutDashboard,
+  CalendarDays,
+  CheckSquare,
+  BookOpen,
+  FileText,
+  MessageSquare,
+  Library,
   AlertCircle,
   User,
   LogOut,
@@ -65,7 +65,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      
+
       {/* মোবাইল সাইডবার ওভারলে */}
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -79,7 +79,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             <X size={20} />
           </button>
         </div>
-        
+
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto no-scrollbar">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -89,11 +89,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                  isActive 
-                    ? "bg-white/10 text-white font-bold border-l-4 border-[#4CAF50]" 
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${isActive
+                    ? "bg-white/10 text-white font-bold border-l-4 border-[#4CAF50]"
                     : "text-slate-300 hover:bg-white/5 hover:text-white font-medium"
-                }`}
+                  }`}
               >
                 <Icon size={20} />
                 {item.name}
@@ -103,40 +102,33 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </nav>
 
         <div className="p-4 border-t border-white/10">
-          <button 
-            onClick={handleLogout} 
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 font-medium transition"
-          >
-            <LogOut size={20} /> লগআউট
-          </button>
-        </div>
-                <div className="p-4 border-t border-white/10 bg-[#002A41] shrink-0">
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 font-medium transition"
           >
             <LogOut size={20} /> লগআউট
           </button>
-          
-          {/* 🌟 Developed By Text with Link */}
-          <div className="mt-3 text-center">
-            <p className="text-[10px] text-slate-400">
-              Developed by{" "}
-              <a 
-                href="https://facebook.com/TahsanBillah" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="font-bold text-[#4CAF50] hover:underline"
-              >
-                Tahsan
-              </a>
-            </p>
-          </div>
         </div>
-      </aside>
 
-      {/* মূল কন্টেন্ট */}
-      <div className="flex-1 flex flex-col min-w-0">
+        {/* 🌟 Developed By Text with Link */}
+        <div className="mt-3 text-center">
+          <p className="text-[10px] text-slate-400">
+            Developed by{" "}
+            <a
+              href="https://facebook.com/TahsanBillah"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#4CAF50] hover:underline"
+            >
+              Tahsan
+            </a>
+          </p>
+        </div>
+    </div>
+      </aside >
+
+    {/* মূল কন্টেন্ট */ }
+    < div className = "flex-1 flex flex-col min-w-0" >
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6">
           <button className="lg:hidden text-ink" onClick={() => setSidebarOpen(true)}>
             <Menu size={24} />
@@ -152,7 +144,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         <main className="flex-1 p-6 lg:p-8 overflow-auto">
           {children}
         </main>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

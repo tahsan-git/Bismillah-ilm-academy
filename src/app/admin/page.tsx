@@ -182,7 +182,7 @@ export default function AdminDashboard() {
         <div className="relative z-10">
           <p className="text-slate-300 text-sm mb-1">{todayDate}</p>
           <h1 className="text-2xl md:text-3xl font-bold mb-2 text-[#FFD700]">
-            স্বাগতম, অ্যাডমিন!
+            স্বাগতম, রেজওয়ান সাহেব!
           </h1>
           <p className="text-slate-300 text-sm md:text-base">
             আজকের পেন্ডিং কাজগুলো দেখে নিন।
