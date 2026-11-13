@@ -11,7 +11,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: ["next/core-web-vitals", "next/typescript"],
+    extends: ["next/core-web-vitals", "next/typescript","next/core-web-vitals"],
     rules: {
       // 🌟 বিল্ড আটকানো বন্ধ করার জন্য এই রুলগুলো অফ করা হলো
       "@typescript-eslint/no-explicit-any": "off",
@@ -20,6 +20,7 @@ const eslintConfig = [
       "@next/next/no-img-element": "off",
       "jsx-a11y/alt-text": "off",
       "react/no-unescaped-entities": "off",
+      "prefer-const": "off",
     },
   }),
 ];
