@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { 
-  Users, 
-  Calendar, 
-  CheckSquare, 
-  FileText, 
-  Clock, 
-  ArrowRight, 
+import {
+  Users,
+  Calendar,
+  CheckSquare,
+  FileText,
+  Clock,
+  ArrowRight,
   Loader2,
   Bell,
   CheckCircle2,
@@ -19,20 +19,21 @@ import {
 // 🌟 Helper Function: Class ashonno (upcoming) kina check korar jonno
 const isClassUpcoming = (timeSlot: string) => {
   try {
-    const startTimeString = timeSlot.split(" - ")[0]; 
+    const startTimeString = timeSlot.split(" - ")[0];
     const [time, modifier] = startTimeString.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    
+    let [hours] = time.split(":").map(Number);
+    const [, minutes] = time.split(":").map(Number);
+
     if (modifier === "PM" && hours < 12) hours += 12;
     if (modifier === "AM" && hours === 12) hours = 0;
-    
+
     const now = new Date();
     const classStartTime = new Date();
     classStartTime.setHours(hours, minutes, 0, 0);
-    
+
     return now < classStartTime;
   } catch (e) {
-    return true; 
+    return true;
   }
 };
 
@@ -45,7 +46,7 @@ export default function TeacherDashboard() {
     completedClasses: 0,
     pendingReports: 0,
   });
-  
+
   const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
   const [notices, setNotices] = useState<any[]>([]);
   const supabase = createClient();
@@ -78,7 +79,7 @@ export default function TeacherDashboard() {
       // ৩. আজকের ক্লাস রুটিন
       const daysEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const todayEn = daysEn[new Date().getDay()];
-      
+
       const { data: schedulesData } = await supabase
         .from("class_schedules")
         .select(`
@@ -141,7 +142,7 @@ export default function TeacherDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20">
-      
+
       {/* ওয়েলকাম হেডার */}
       <div className="bg-[#002A41] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
         <div className="relative z-10">
@@ -187,7 +188,7 @@ export default function TeacherDashboard() {
             {notices.map((n) => (
               <div key={n.id} className={`p-4 rounded-xl border ${n.is_important ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                  {n.is_important && <AlertTriangle size={16} className="text-red-500" />} 
+                  {n.is_important && <AlertTriangle size={16} className="text-red-500" />}
                   {n.title}
                 </h3>
                 <div className="text-sm text-slate-600 mt-2 whitespace-pre-wrap leading-relaxed">
@@ -201,7 +202,7 @@ export default function TeacherDashboard() {
 
       {/* ক্লাস শিডিউল এবং নোটিফিকেশন */}
       <div className="grid lg:grid-cols-3 gap-6">
-        
+
         {/* আজকের আসন্ন ক্লাস শিডিউল */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
@@ -245,13 +246,13 @@ export default function TeacherDashboard() {
           </div>
           <div className="p-4 space-y-3">
             {todaySchedule.length > 0 ? (
-               <div className="p-3 bg-red-50 rounded-xl border border-red-100 flex items-start gap-3">
-                 <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0 animate-pulse"></div>
-                 <div>
-                   <p className="text-sm font-bold text-red-800">আজ আপনার {todaySchedule.length}টি ক্লাস বাকি আছে!</p>
-                   <p className="text-xs text-red-600 mt-1">সময়মতো ক্লাস শুরু করুন।</p>
-                 </div>
-               </div>
+              <div className="p-3 bg-red-50 rounded-xl border border-red-100 flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0 animate-pulse"></div>
+                <div>
+                  <p className="text-sm font-bold text-red-800">আজ আপনার {todaySchedule.length}টি ক্লাস বাকি আছে!</p>
+                  <p className="text-xs text-red-600 mt-1">সময়মতো ক্লাস শুরু করুন।</p>
+                </div>
+              </div>
             ) : (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <p className="text-sm text-slate-500 text-center">আজ আর কোনো ক্লাস নেই।</p>

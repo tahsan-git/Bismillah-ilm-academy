@@ -1,40 +1,40 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { 
-  CalendarDays, 
-  Clock, 
-  Edit, 
-  X, 
-  Loader2, 
-  Save, 
-  Video, 
-  User, 
-  Link as LinkIcon 
+import {
+  CalendarDays,
+  Clock,
+  Edit,
+  X,
+  Loader2,
+  Save,
+  Video,
+  User,
+  Link as LinkIcon
 } from "lucide-react";
 
 export default function ClassSchedule() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState("Saturday");
-  
+
   // Edit Modal State (Sudhu Link er jonno)
   const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
   const [editLink, setEditLink] = useState("");
   const [saving, setSaving] = useState(false);
 
   const supabase = createClient();
-  
+
   const daysEn = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const daysBn: Record<string, string> = { 
-    Saturday: "শনিবার", Sunday: "রবিবার", Monday: "সোমবার", 
-    Tuesday: "মঙ্গলবার", Wednesday: "বুধবার", Thursday: "বৃহস্পতিবার", Friday: "শুক্রবার" 
+  const daysBn: Record<string, string> = {
+    Saturday: "শনিবার", Sunday: "রবিবার", Monday: "সোমবার",
+    Tuesday: "মঙ্গলবার", Wednesday: "বুধবার", Thursday: "বৃহস্পতিবার", Friday: "শুক্রবার"
   };
 
   const fetchSchedules = async () => {
     setLoading(true);
     const teacherId = localStorage.getItem("teacher_id");
-    
+
     if (teacherId) {
       const { data } = await supabase
         .from("class_schedules")
@@ -43,7 +43,7 @@ export default function ClassSchedule() {
           students ( name )
         `)
         .eq("teacher_id", teacherId);
-        
+
       if (data) setSchedules(data);
     }
     setLoading(false);
@@ -55,7 +55,7 @@ export default function ClassSchedule() {
 
   const handleEditClick = (schedule: any) => {
     setSelectedSchedule(schedule);
-    setEditLink(schedule.meeting_link || ""); 
+    setEditLink(schedule.meeting_link || "");
   };
 
   const handleSave = async () => {
@@ -63,21 +63,21 @@ export default function ClassSchedule() {
     // 🌟 Sudhu meeting_link update hocche
     const { error } = await supabase
       .from("class_schedules")
-      .update({ 
-        meeting_link: editLink.trim() || null 
+      .update({
+        meeting_link: editLink.trim() || null
       })
       .eq("id", selectedSchedule.id);
 
     if (!error) {
       setSelectedSchedule(null);
-      fetchSchedules(); 
+      fetchSchedules();
     } else {
       alert("আপডেট করতে সমস্যা হয়েছে: " + error.message);
     }
     setSaving(false);
   };
 
-    // 🌟 Sorting Logic: Time onujayi sort (Ajker din hole current time er kachakachi upore)
+  // 🌟 Sorting Logic: Time onujayi sort (Ajker din hole current time er kachakachi upore)
   const filteredSchedules = schedules
     .filter(s => s.day_of_week === activeDay)
     .sort((a, b) => {
@@ -85,7 +85,8 @@ export default function ClassSchedule() {
       const getTime = (timeStr: string) => {
         const startTime = timeStr.split(" - ")[0]; // "08:00 AM"
         const [time, modifier] = startTime.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
+        let [hours] = time.split(":").map(Number);
+        const [, minutes] = time.split(":").map(Number);
         if (modifier === "PM" && hours < 12) hours += 12;
         if (modifier === "AM" && hours === 12) hours = 0;
         return hours * 60 + minutes;
@@ -101,7 +102,7 @@ export default function ClassSchedule() {
       if (activeDay === todayEn) {
         const now = new Date();
         const currentTime = now.getHours() * 60 + now.getMinutes();
-        
+
         // Jodi class time par hoye geche, seta niche chole jabe
         const isPastA = timeA < currentTime;
         const isPastB = timeB < currentTime;
@@ -126,9 +127,8 @@ export default function ClassSchedule() {
           <button
             key={day}
             onClick={() => setActiveDay(day)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition ${
-              activeDay === day ? "bg-[#002A41] text-white shadow-md" : "bg-white text-slate-600 border border-slate-200"
-            }`}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition ${activeDay === day ? "bg-[#002A41] text-white shadow-md" : "bg-white text-slate-600 border border-slate-200"
+              }`}
           >
             {daysBn[day]}
           </button>
@@ -142,7 +142,7 @@ export default function ClassSchedule() {
             <CalendarDays size={20} /> {daysBn[activeDay]}-এর ক্লাস
           </h2>
         </div>
-        
+
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#002A41]" size={32} /></div>
         ) : filteredSchedules.length === 0 ? (
@@ -160,7 +160,7 @@ export default function ClassSchedule() {
                     <p className="text-sm text-slate-500 flex items-center gap-1 mt-0.5">
                       <User size={14} /> {schedule.students?.name || "শিক্ষার্থী"}
                     </p>
-                    
+
                     {/* Link Preview */}
                     {schedule.meeting_link ? (
                       <p className="text-xs text-green-600 font-bold flex items-center gap-1 mt-1">
@@ -173,14 +173,14 @@ export default function ClassSchedule() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* 🌟 Button Group */}
                 <div className="flex items-center gap-2">
                   {/* Join Button (Jodi link thake) */}
                   {schedule.meeting_link && (
-                    <a 
-                      href={schedule.meeting_link} 
-                      target="_blank" 
+                    <a
+                      href={schedule.meeting_link}
+                      target="_blank"
                       rel="noreferrer"
                       className="text-sm font-bold text-white bg-[#4CAF50] flex items-center justify-center gap-1 px-4 py-2 rounded-lg hover:bg-[#388E3C] transition"
                     >
@@ -189,13 +189,12 @@ export default function ClassSchedule() {
                   )}
 
                   {/* Add/Edit Button (Dynamic Color) */}
-                  <button 
+                  <button
                     onClick={() => handleEditClick(schedule)}
-                    className={`text-sm font-bold flex items-center justify-center gap-1 px-4 py-2 rounded-lg transition ${
-                      schedule.meeting_link 
-                        ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100" 
+                    className={`text-sm font-bold flex items-center justify-center gap-1 px-4 py-2 rounded-lg transition ${schedule.meeting_link
+                        ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
                         : "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100"
-                    }`}
+                      }`}
                   >
                     {schedule.meeting_link ? (
                       <>
@@ -213,7 +212,7 @@ export default function ClassSchedule() {
           </div>
         )}
       </div>
-      
+
 
       {/* এডিট মোডাল (Sudhu Link) */}
       {selectedSchedule && (
@@ -223,7 +222,7 @@ export default function ClassSchedule() {
               <h2 className="text-lg font-bold text-[#002A41]">মিটিং লিংক দিন</h2>
               <button onClick={() => setSelectedSchedule(null)} className="p-1 bg-slate-100 rounded-full hover:bg-slate-200"><X size={20} /></button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
                 <p className="text-xs text-slate-500 mb-1">ক্লাসের সময়:</p>
@@ -236,12 +235,12 @@ export default function ClassSchedule() {
                 <label className="block text-sm font-bold mb-1 flex items-center gap-1">
                   <LinkIcon size={14} /> মিটিং লিংক (Zoom/Meet)
                 </label>
-                <input 
-                  type="url" 
-                  value={editLink} 
-                  onChange={(e) => setEditLink(e.target.value)} 
-                  className="w-full p-2.5 border rounded-lg focus:border-[#4CAF50] outline-none" 
-                  placeholder="https://zoom.us/j/..." 
+                <input
+                  type="url"
+                  value={editLink}
+                  onChange={(e) => setEditLink(e.target.value)}
+                  className="w-full p-2.5 border rounded-lg focus:border-[#4CAF50] outline-none"
+                  placeholder="https://zoom.us/j/..."
                 />
                 <p className="text-[10px] text-slate-400 mt-1">ক্লাস শেষ হলে এই লিংক স্বয়ংক্রিয়ভাবে মুছে যাবে।</p>
               </div>

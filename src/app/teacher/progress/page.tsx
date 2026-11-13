@@ -65,8 +65,8 @@ export default function StudentProgress() {
         const durbal = studentReports.filter((r: any) => r.understanding_level === "দুর্বল").length;
 
         // Rating calculate (chomokkar=5, valo=4, majhari=3, durbal=2)
-        let totalPoints = (chomokkar * 5) + (valo * 4) + (majhari * 3) + (durbal * 2);
-        let rating = totalReports > 0 ? (totalPoints / totalReports).toFixed(1) : "0.0";
+        const totalPoints = (chomokkar * 5) + (valo * 4) + (majhari * 3) + (durbal * 2);
+        const rating = totalReports > 0 ? (totalPoints / totalReports).toFixed(1) : "0.0";
 
         // Progress % (100 reports = 100% dhore nechi)
         const progressPercent = Math.min(Math.round((totalReports / 20) * 100), 100);
